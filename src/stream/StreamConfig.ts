@@ -26,4 +26,5 @@ export const streamConfig: StreamConfig = {
   cameraDirectorEnabled: params.get('camera') !== '0',
   atmosphereEnabled: params.get('atmosphere') !== '0',
   fixedCity: params.get('fixed') !== '0', // Fixed bounded city mode (default on)
+  streamQuality: params.get('quality') || 'high', // M3: Stream quality preset
 };

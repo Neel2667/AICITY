@@ -201,12 +201,16 @@ export class SceneManager {
                 }
 
                 this.inputMgr.on("mousewheel", (value: any) => {
+                    // In manual mode, OrbitControls handles zoom natively — don't
+                    // fight it with updateHeight() (that was locking the camera).
+                    if (this.useAuthoredCity && !this.tourCamera) return;
                     if( !GVar.bCameraAnimState )
                         this.cameraController.updateHeight(value.deltaY * .05);
                 });
 
                 // 处理点击效果：
                 this.inputMgr.on("startdrag", (evt: any) => {
+                    if (this.useAuthoredCity) return; // no car-picking in authored city
                     this.onMousePickCar(evt);
                 });
             });
@@ -519,13 +523,15 @@ export class SceneManager {
                 this.cameraController.update();
                 this.clampCameraToMap();
             } else {
-                // Manual free-look: OrbitControls drives the camera; only keep the
-                // look-at target near the map so the user doesn't lose the city.
+                // Manual free-look: OrbitControls + WASD drive the camera. Keep the
+                // look-at target loosely near the map (generous margin) so you can
+                // roam freely without snapping back.
                 this.cameraController.update();
                 const b = worldBounds();
+                const m = 200;
                 const tgt = this.cameraController.getLookAtTarget();
-                tgt.x = Math.min(b.maxX, Math.max(b.minX, tgt.x));
-                tgt.z = Math.min(b.maxZ, Math.max(b.minZ, tgt.z));
+                tgt.x = Math.min(b.maxX + m, Math.max(b.minX - m, tgt.x));
+                tgt.z = Math.min(b.maxZ + m, Math.max(b.minZ - m, tgt.z));
             }
         } else {
             // ─── legacy infinite engine path ───

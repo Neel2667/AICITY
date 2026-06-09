@@ -196,6 +196,13 @@ export class CameraController {
 
         TWEEN.update();
 
+        // Manual free-look: WASD/arrow movement, then let OrbitControls run.
+        if (this.manualMode) {
+            this.updateKeyMovement();
+            (this.controls as OrbitControls).update();
+            return;
+        }
+
         // 允许垂直旋转：恢复默认角度范围
         if (this.bPolarAdj) {
             this.camera.position.y += .05 * (this.targetHeight - this.camera.position.y);
@@ -238,8 +245,13 @@ export class CameraController {
         this.camera.updateProjectionMatrix();
     }
 
+    protected manualMode: boolean = false;
+    protected keys: Record<string, boolean> = {};
+    protected keyHandlersBound: boolean = false;
+
     // ─── Manual free-look mode ──────────────────────────────────────────────────
-    // Unlocks the OrbitControls so the viewer can rotate, zoom and pan freely.
+    // Unlocks the OrbitControls so the viewer can rotate, zoom and pan freely,
+    // and enables WASD / arrow-key movement to glide the focus across the city.
     public enableManual(): void {
         if (this.bUseCC) return;
         const c = this.controls as OrbitControls;
@@ -248,16 +260,66 @@ export class CameraController {
         c.enablePan = true;
         c.enableZoom = true;
         c.enableDamping = true;
-        c.dampingFactor = 0.08;
-        c.zoomSpeed = 1.1;
-        c.rotateSpeed = 0.7;
-        c.panSpeed = 0.8;
+        c.dampingFactor = 0.12;
+        c.zoomSpeed = 1.6;
+        c.rotateSpeed = 0.55;
+        c.panSpeed = 1.0;
+        c.screenSpacePanning = false; // pan parallel to the ground
+        c.mouseButtons = {
+            LEFT: THREE.MOUSE.ROTATE,
+            MIDDLE: THREE.MOUSE.DOLLY,
+            RIGHT: THREE.MOUSE.PAN,
+        };
         // Allow tilting from near-top-down to a low skyline angle (not under ground)
         c.minPolarAngle = 0.12;
         c.maxPolarAngle = 1.45;
-        c.minDistance = 30;
-        c.maxDistance = 900;
+        c.minDistance = 25;
+        c.maxDistance = 1200;
         this.bPolarAdj = false;
+        this.manualMode = true;
+        this.bindKeys();
+    }
+
+    protected bindKeys(): void {
+        if (this.keyHandlersBound) return;
+        this.keyHandlersBound = true;
+        window.addEventListener('keydown', (e) => {
+            const k = e.key.toLowerCase();
+            if (['w','a','s','d','q','e','arrowup','arrowdown','arrowleft','arrowright'].includes(k)) {
+                this.keys[k] = true;
+            }
+        });
+        window.addEventListener('keyup', (e) => { this.keys[e.key.toLowerCase()] = false; });
+        window.addEventListener('blur', () => { this.keys = {}; });
+    }
+
+    /** Move the orbit target (and camera) across the ground via WASD/arrows. */
+    protected updateKeyMovement(): void {
+        if (!this.manualMode || this.bUseCC) return;
+        const c = this.controls as OrbitControls;
+        const k = this.keys;
+        const fwd = (k['w'] || k['arrowup'] ? 1 : 0) - (k['s'] || k['arrowdown'] ? 1 : 0);
+        const right = (k['d'] || k['arrowright'] ? 1 : 0) - (k['a'] || k['arrowleft'] ? 1 : 0);
+        const up = (k['e'] ? 1 : 0) - (k['q'] ? 1 : 0);
+        if (!fwd && !right && !up) return;
+
+        // Speed scales with zoom distance so it feels right when far or near.
+        const dist = this.camera.position.distanceTo(c.target);
+        const speed = Math.max(1.2, dist * 0.012);
+
+        // Horizontal forward/right relative to camera yaw, projected to ground.
+        const dir = new THREE.Vector3();
+        this.camera.getWorldDirection(dir);
+        dir.y = 0; dir.normalize();
+        const side = new THREE.Vector3().crossVectors(dir, new THREE.Vector3(0, 1, 0)).normalize();
+
+        const move = new THREE.Vector3();
+        move.addScaledVector(dir, fwd * speed);
+        move.addScaledVector(side, right * speed);
+        move.y += up * speed;
+
+        this.camera.position.add(move);
+        c.target.add(move);
     }
 
     // Re-locks controls (used by the guided tour camera which drives the camera itself).
@@ -270,5 +332,7 @@ export class CameraController {
         c.enableZoom = false;
         c.enabled = false;
         this.bPolarAdj = false;
+        this.manualMode = false;
+        this.keys = {};
     }
 }

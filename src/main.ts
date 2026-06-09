@@ -71,8 +71,8 @@ camHint.style.cssText =
 function renderCamHint() {
   const td = sceneManager.getTourCamera();
   camHint.textContent = td
-    ? '🎬 Guided Tour — drag to take manual control · press M'
-    : '🖱️ Manual camera — drag to rotate · scroll to zoom · right-drag to pan · press M for tour';
+    ? '🎬 Guided Tour · press M for manual control'
+    : '🖱️ Drag: rotate · Scroll: zoom · Right-drag: pan · WASD/Arrows: move · M: tour';
 }
 function toggleCameraMode() {
   sceneManager.toggleCameraMode();

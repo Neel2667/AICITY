@@ -57,9 +57,14 @@ export class GVar {
     public static MAX_PIXEL_RATIO: number = 1.25;
     public static SHADOWMAP_RESOLUTION: number = GVar.isMobile() ? 1024 : 2048;
     public static SHADOWMAP_TYPE: "SHADOWMAP_TYPE_PCF";
-    public static TABLE_SIZE: number = 9;
-    public static CHUNK_COUNT: number = 9;
+    public static TABLE_SIZE: number = 16;
+    public static CHUNK_COUNT: number = 16;
     public static CHUNK_SIZE: number = 60;
+
+    // Fixed-map mode: build all chunks once at their permanent positions and
+    // disable the infinite scroll/wrap, so the city is ONE bounded place you
+    // fly a manual camera around (instead of an endless treadmill).
+    public static FIXED_MAP: boolean = true;
     public static CAMERA_ANGLE: number = .5;
     public static PAN_SPEED: number = this.isMobile() ? 0.4 : 0.1;
     public static FOG_NEAR: number = 1200;

@@ -171,6 +171,30 @@ export class SceneManager {
 
                     this.initKeyEvent();
                     this.bInited = true;
+                } else if (GVar.FIXED_MAP) {
+                    // ─── FIXED 16x16 CITY (original assets, no infinite scroll) ────
+                    this.cityChkTbl = new CityChunkTbl(arrBlocks, arrLanes, arrIntersections, arrCars, arrClouds);
+                    this.chunkScene = new AppScene();
+                    this.chunkScene.initChunks();
+                    this.scene.add(this.chunkScene);
+
+                    this.chunkScene.add(this.dirLight);
+                    this.chunkScene.add(this.dirLight.target);
+
+                    this.initKeyEvent();
+
+                    // Place EVERY chunk at its permanent position once, then never move.
+                    this.refreshChunkScene();
+                    // No SceneMoveController, no chunkmove handler → the city stays put.
+
+                    // Manual camera framed to the whole fixed city.
+                    this.cameraDirector = null;
+                    this.smController = null;
+                    this.tourCamera = null;
+                    this.frameCameraToFixedCity();
+                    this.cameraController.enableManual();
+                    this.bInited = true;
+                    console.log('[AICITY] Fixed 16x16 city built (manual camera; drag/scroll/WASD)');
                 } else {
                     // ─── LEGACY INFINITE PROCEDURAL ENGINE (fallback) ─────────────
                     this.cityChkTbl = new CityChunkTbl(arrBlocks, arrLanes, arrIntersections, arrCars, arrClouds);
@@ -197,16 +221,16 @@ export class SceneManager {
                 }
 
                 this.inputMgr.on("mousewheel", (value: any) => {
-                    // In manual mode, OrbitControls handles zoom natively — don't
-                    // fight it with updateHeight() (that was locking the camera).
-                    if (this.useAuthoredCity && !this.tourCamera) return;
+                    // In any manual-camera mode (authored scene or fixed map),
+                    // OrbitControls handles zoom natively — don't fight it.
+                    if ((this.useAuthoredCity && !this.tourCamera) || GVar.FIXED_MAP) return;
                     if( !GVar.bCameraAnimState )
                         this.cameraController.updateHeight(value.deltaY * .05);
                 });
 
                 // 处理点击效果：
                 this.inputMgr.on("startdrag", (evt: any) => {
-                    if (this.useAuthoredCity) return; // no car-picking in authored city
+                    if (this.useAuthoredCity || GVar.FIXED_MAP) return; // no car-picking
                     this.onMousePickCar(evt);
                 });
             });
@@ -372,8 +396,13 @@ export class SceneManager {
                 // Large artist scene: keep distant skyline visible.
                 this.scene.fog.near = 1400 - weather.fogBoost * 300;
                 this.scene.fog.far  = 4200 - weather.fogBoost * 600;
+            } else if (GVar.FIXED_MAP) {
+                // Fixed 16x16 city: fog far enough to see the whole place, but
+                // still hazes the distant edges for a cozy, framed look.
+                this.scene.fog.near = 700 - weather.fogBoost * 200;
+                this.scene.fog.far  = 1800 - weather.fogBoost * 300;
             } else {
-                // Original InfiniTown look: cozy close fog.
+                // Original InfiniTown infinite-scroll look: cozy close fog.
                 this.scene.fog.near = 170 - weather.fogBoost * 55;
                 this.scene.fog.far  = 320 - weather.fogBoost * 60;
             }
@@ -523,6 +552,18 @@ export class SceneManager {
     }
 
     /** Keep the look-at target loosely within the city radius. */
+    /** Frame the manual camera over the whole fixed 16x16 city. */
+    protected frameCameraToFixedCity(): void {
+        const span = GVar.CHUNK_COUNT * GVar.CHUNK_SIZE; // 16 * 60 = 960
+        this.cityRadius = span * 0.5;                    // ~480
+        const cam = this.cameraController.camera;
+        // pleasant high isometric overview of the whole city
+        cam.position.set(span * 0.62, span * 0.7, span * 0.62);
+        cam.lookAt(0, 0, 0);
+        this.cameraController.getLookAtTarget().set(0, 0, 0);
+        cam.updateProjectionMatrix();
+    }
+
     protected clampTargetToCity(margin = 1.2): void {
         const r = this.cityRadius * margin;
         const tgt = this.cameraController.getLookAtTarget();
@@ -554,6 +595,11 @@ export class SceneManager {
                 this.cameraController.update();
                 this.clampTargetToCity(1.6);
             }
+        } else if (GVar.FIXED_MAP) {
+            // ─── fixed 16x16 city: manual camera, no scroll, cars still drive ───
+            this.cameraController.update();          // OrbitControls + WASD
+            this.clampTargetToCity(1.1);             // keep view over the city
+            this.cityChkTbl?.update({ delta: delta, elapsed: elapsed }); // moving cars/clouds
         } else {
             // ─── legacy infinite engine path ───
             this.updateFollow();

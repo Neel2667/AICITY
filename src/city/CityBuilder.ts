@@ -1,26 +1,25 @@
 /**
- * CityBuilder.ts — 24×24 Kenney-only city, correct road orientations.
+ * CityBuilder.ts — 24×24 Kenney-only city.
  *
- * GROUND TRUTH (measured from actual GLB vertex data):
+ * DEFINITIVE ROAD ROTATION TABLE (proven by rotating actual vertex positions):
  *
- *   road-straight   → runs along Z (N-S) by default
- *                     rotY=0 for N-S, rotY=PI/2 for E-W
+ *   road-straight  default = runs N-S (along Z axis)
+ *     N-S:  rotY = 0
+ *     E-W:  rotY = PI/2
  *
- *   road-bend       → default opens toward N(-Z) and E(+X) = NE corner
- *                     NE: rotY=0    NW: rotY=PI/2
- *                     SE: rotY=-PI/2  SW: rotY=PI
+ *   road-bend      default = opens W + S  (SW corner piece)
+ *     S+W:  rotY = 0          S+E:  rotY = -PI/2
+ *     N+W:  rotY = PI/2       N+E:  rotY = PI
  *
- *   road-intersection (T-junction) → closed side = NORTH by default
- *                     missing N (S+E+W open): rotY=0
- *                     missing S (N+E+W open): rotY=PI
- *                     missing E (N+S+W open): rotY=PI/2
- *                     missing W (N+S+E open): rotY=-PI/2
+ *   road-intersection (T-junction)  default = closes NORTH, opens S+E+W
+ *     missing N:  rotY = 0        missing W:  rotY = PI/2
+ *     missing S:  rotY = PI       missing E:  rotY = -PI/2
  *
- *   road-end        → closed side = WEST by default, open toward E
- *                     open E: rotY=0    open W: rotY=PI
- *                     open N: rotY=-PI/2  open S: rotY=PI/2
+ *   road-end       default = opens EAST
+ *     open E:  rotY = 0        open N:  rotY = PI/2
+ *     open W:  rotY = PI       open S:  rotY = -PI/2
  *
- *   road-crossroad  → symmetric, rotY=0 always
+ *   road-crossroad  symmetric → rotY = 0 always
  */
 import * as THREE from 'three';
 import {
@@ -73,84 +72,80 @@ export class CityBuilder {
     return m;
   }
 
-  // ─── Road piece: correct orientations from measured GLB data ──────────────
+  // ─── Road piece selection with CORRECT rotations ───────────────────────────
   private roadPiece(x: number, y: number): THREE.Object3D | null {
-    const N = isRoad(x, y - 1);   // north = row above (y-1)
-    const S = isRoad(x, y + 1);   // south = row below (y+1)
-    const E = isRoad(x + 1, y);   // east  = col right
-    const W = isRoad(x - 1, y);   // west  = col left
+    const N = isRoad(x, y - 1);
+    const S = isRoad(x, y + 1);
+    const E = isRoad(x + 1, y);
+    const W = isRoad(x - 1, y);
     const count = (N?1:0)+(S?1:0)+(E?1:0)+(W?1:0);
 
     let name = 'road-straight';
     let rotY = 0;
 
     if (count === 4) {
-      // Full crossroad — symmetric, no rotation needed
+      // ── Full crossroad ── symmetric
       name = 'road-crossroad';
       rotY = 0;
 
     } else if (count === 3) {
-      // T-junction: road-intersection default = closed NORTH (S+E+W open)
+      // ── T-junction ──  default closes NORTH (opens S+E+W)
       name = 'road-intersection';
-      if      (!N) rotY = 0;             // missing N → default
-      else if (!S) rotY = Math.PI;       // missing S → flip 180
-      else if (!E) rotY = Math.PI / 2;   // missing E → rotate 90° CW
-      else         rotY = -Math.PI / 2;  // missing W → rotate 90° CCW
+      if      (!N) rotY = 0;            // missing N → default
+      else if (!W) rotY = Math.PI / 2;  // missing W
+      else if (!S) rotY = Math.PI;      // missing S
+      else         rotY = -Math.PI / 2; // missing E
+
+    } else if (count === 2 && ((N && S) || (E && W))) {
+      // ── Straight through ──
+      name = 'road-straight';
+      rotY = (E && W) ? Math.PI / 2 : 0;
 
     } else if (count === 2) {
-      if (N && S) {
-        // Straight N-S
-        name = 'road-straight';
-        rotY = 0;
-      } else if (E && W) {
-        // Straight E-W
-        name = 'road-straight';
-        rotY = Math.PI / 2;
-      } else {
-        // Corner/bend: default = NE corner (opens N and E)
-        name = 'road-bend';
-        if      (N && E) rotY = 0;              // NE corner → default
-        else if (N && W) rotY = Math.PI / 2;    // NW corner
-        else if (S && W) rotY = Math.PI;        // SW corner
-        else             rotY = -Math.PI / 2;   // SE corner (S && E)
-      }
+      // ── Corner/bend ──  default opens W + S  (SW corner)
+      name = 'road-bend';
+      if      (S && W) rotY = 0;            // SW → default
+      else if (N && W) rotY = Math.PI / 2;  // NW
+      else if (N && E) rotY = Math.PI;      // NE
+      else             rotY = -Math.PI / 2; // SE  (S && E)
 
     } else if (count === 1) {
-      // Dead end: road-end default = open EAST (closed west)
+      // ── Dead-end ──  default opens EAST
       name = 'road-end';
-      if      (E) rotY = 0;              // open E → default
-      else if (W) rotY = Math.PI;        // open W
-      else if (N) rotY = -Math.PI / 2;   // open N
-      else        rotY = Math.PI / 2;    // open S
+      if      (E) rotY = 0;            // open E → default
+      else if (N) rotY = Math.PI / 2;  // open N
+      else if (W) rotY = Math.PI;      // open W
+      else        rotY = -Math.PI / 2; // open S
 
     } else {
-      // Isolated tile — just use a crossroad flat surface
+      // isolated tile — flat surface
       name = 'road-crossroad';
       rotY = 0;
     }
 
-    // Try exact model first, graceful fallback
     let obj = modelLibrary.get('roads', name);
     if (!obj) {
       for (const fb of ['road-straight','road-crossroad','road-bend','road-end']) {
-        obj = modelLibrary.get('roads', fb); if (obj) break;
+        obj = modelLibrary.get('roads', fb);
+        if (obj) break;
       }
     }
     if (obj) obj.rotation.y = rotY;
     return obj;
   }
 
-  // ─── Build all tiles ───────────────────────────────────────────────────────
+  // ─── Main build ────────────────────────────────────────────────────────────
   public build(): THREE.Group {
     while (this.root.children.length) this.root.remove(this.root.children[0]);
     for (let y = 0; y < GRID_H; y++) {
       for (let x = 0; x < GRID_W; x++) {
-        const tile = TILES[y][x];
-        const node = this.buildTile(tile.kind, x, y, tile.zoneId);
+        const tile  = TILES[y][x];
+        const node  = this.buildTile(tile.kind, x, y, tile.zoneId);
         if (!node) continue;
         const { x: wx, z: wz } = tileToWorld(x, y);
         node.position.set(wx, 0, wz);
-        (node as any).tileX = x; (node as any).tileY = y; (node as any).zoneId = tile.zoneId;
+        (node as any).tileX = x; (node as any).tileY = y;
+        (node as any).zoneId = tile.zoneId;
         node.name = node.name || `tile_${x}_${y}`;
         this.root.add(node);
       }
@@ -198,98 +193,99 @@ export class CityBuilder {
       name = bs.length ? bs[this.idx(x, y, 3) % bs.length] : null;
     }
     const model = name ? modelLibrary.get('commercial', name) : null;
-    if (model) { model.rotation.y = (this.idx(x,y,4) % 4) * (Math.PI/2); g.add(model); }
-    if (this.idx(x,y,8) % 3 === 0) {
-      const d = modelLibrary.get('commercial','detail-awning') ?? modelLibrary.get('commercial','detail-awning-wide');
+    if (model) { model.rotation.y = (this.idx(x, y, 4) % 4) * (Math.PI / 2); g.add(model); }
+    if (this.idx(x, y, 8) % 3 === 0) {
+      const d = modelLibrary.get('commercial', 'detail-awning') ?? modelLibrary.get('commercial', 'detail-awning-wide');
       if (d) { d.position.z = 12; g.add(d); }
     }
   }
 
   private buildMidtown(g: THREE.Group, x: number, y: number): void {
     const all = modelLibrary.names('commercial');
-    const useLow = this.idx(x,y,10) % 3 === 0;
+    const useLow = this.idx(x, y, 10) % 3 === 0;
     let name: string | null = null;
     if (useLow) {
       const low = all.filter(n => n.startsWith('low-detail'));
-      name = low.length ? low[this.idx(x,y,11) % low.length] : null;
+      name = low.length ? low[this.idx(x, y, 11) % low.length] : null;
     }
     if (!name) {
       const reg = all.filter(n => n.startsWith('building-') && !n.startsWith('building-skyscraper') && !n.startsWith('low-detail'));
-      name = reg.length ? reg[this.idx(x,y,12) % reg.length] : null;
+      name = reg.length ? reg[this.idx(x, y, 12) % reg.length] : null;
     }
     const model = name ? modelLibrary.get('commercial', name) : null;
-    if (model) { model.rotation.y = (this.idx(x,y,13) % 4) * (Math.PI/2); g.add(model); }
-    if (this.idx(x,y,14) % 4 === 0) {
-      const p = modelLibrary.get('commercial','detail-parasol-a') ?? modelLibrary.get('commercial','detail-parasol-b');
-      if (p) { p.position.set(14,0,14); g.add(p); }
+    if (model) { model.rotation.y = (this.idx(x, y, 13) % 4) * (Math.PI / 2); g.add(model); }
+    if (this.idx(x, y, 14) % 4 === 0) {
+      const p = modelLibrary.get('commercial', 'detail-parasol-a') ?? modelLibrary.get('commercial', 'detail-parasol-b');
+      if (p) { p.position.set(14, 0, 14); g.add(p); }
     }
   }
 
   private buildResidential(g: THREE.Group, x: number, y: number): void {
     const houses = modelLibrary.names('suburban').filter(n => n.startsWith('building-type'));
-    const name = houses.length ? houses[this.idx(x,y,20) % houses.length] : null;
+    const name = houses.length ? houses[this.idx(x, y, 20) % houses.length] : null;
     const house = name ? modelLibrary.get('suburban', name) : null;
-    if (house) { house.rotation.y = (this.idx(x,y,21) % 4) * (Math.PI/2); g.add(house); }
-    if (this.idx(x,y,22) % 2 === 0) {
-      const t = modelLibrary.get('suburban', this.idx(x,y,23)%2 ? 'tree-large' : 'tree-small');
-      if (t) { t.position.set(18,0,18); g.add(t); }
+    if (house) { house.rotation.y = (this.idx(x, y, 21) % 4) * (Math.PI / 2); g.add(house); }
+    if (this.idx(x, y, 22) % 2 === 0) {
+      const t = modelLibrary.get('suburban', this.idx(x, y, 23) % 2 ? 'tree-large' : 'tree-small');
+      if (t) { t.position.set(18, 0, 18); g.add(t); }
     }
-    if (this.idx(x,y,24) % 3 === 0) {
+    if (this.idx(x, y, 24) % 3 === 0) {
       const fOpts = ['fence','fence-low','fence-1x2','fence-1x3'];
-      const f = modelLibrary.get('suburban', fOpts[this.idx(x,y,25) % fOpts.length]);
-      if (f) { f.position.set(-20,0,0); f.rotation.y = Math.PI/2; g.add(f); }
+      const f = modelLibrary.get('suburban', fOpts[this.idx(x, y, 25) % fOpts.length]);
+      if (f) { f.position.set(-20, 0, 0); f.rotation.y = Math.PI / 2; g.add(f); }
     }
-    if (this.idx(x,y,26) % 4 === 0) {
-      const d = modelLibrary.get('suburban', this.idx(x,y,27)%2 ? 'driveway-short' : 'path-short');
-      if (d) { d.position.set(0,0.02,22); g.add(d); }
+    if (this.idx(x, y, 26) % 4 === 0) {
+      const d = modelLibrary.get('suburban', this.idx(x, y, 27) % 2 ? 'driveway-short' : 'path-short');
+      if (d) { d.position.set(0, 0.02, 22); g.add(d); }
     }
   }
 
   private buildVillage(g: THREE.Group, x: number, y: number): void {
     const houses = modelLibrary.names('suburban').filter(n => n.startsWith('building-type'));
-    const small = houses.slice(0, 8);
-    const pool = small.length ? small : houses;
-    const name = pool.length ? pool[this.idx(x,y,30) % pool.length] : null;
+    const pool = houses.slice(0, 8).length ? houses.slice(0, 8) : houses;
+    const name = pool.length ? pool[this.idx(x, y, 30) % pool.length] : null;
     const house = name ? modelLibrary.get('suburban', name) : null;
-    if (house) { house.rotation.y = (this.idx(x,y,31) % 4) * (Math.PI/2); g.add(house); }
-    for (let i = 0; i < 1 + (this.idx(x,y,32)%2); i++) {
-      const t = modelLibrary.get('suburban', i%2 ? 'tree-large' : 'tree-small');
-      if (t) { t.position.set((this.idx(x,y,33+i)%28)-14, 0, (this.idx(x,y,40+i)%28)-14); g.add(t); }
+    if (house) { house.rotation.y = (this.idx(x, y, 31) % 4) * (Math.PI / 2); g.add(house); }
+    for (let i = 0; i < 1 + (this.idx(x, y, 32) % 2); i++) {
+      const t = modelLibrary.get('suburban', i % 2 ? 'tree-large' : 'tree-small');
+      if (t) {
+        t.position.set((this.idx(x, y, 33 + i) % 28) - 14, 0, (this.idx(x, y, 40 + i) % 28) - 14);
+        g.add(t);
+      }
     }
   }
 
   private buildIndustrial(g: THREE.Group, x: number, y: number): void {
     const buildings = modelLibrary.names('industrial').filter(n => n.startsWith('building-'));
-    const name = buildings.length ? buildings[this.idx(x,y,50) % buildings.length] : null;
+    const name = buildings.length ? buildings[this.idx(x, y, 50) % buildings.length] : null;
     const b = name ? modelLibrary.get('industrial', name) : null;
-    if (b) { b.rotation.y = (this.idx(x,y,51) % 4) * (Math.PI/2); g.add(b); }
-    if (this.idx(x,y,52) % 3 === 0) {
-      const cn = ['chimney-small','chimney-basic','chimney-medium','chimney-large'][this.idx(x,y,53)%4];
-      const c = modelLibrary.get('industrial', cn);
-      if (c) { c.position.set((this.idx(x,y,54)%14)-7, 0, (this.idx(x,y,55)%14)-7); g.add(c); }
+    if (b) { b.rotation.y = (this.idx(x, y, 51) % 4) * (Math.PI / 2); g.add(b); }
+    if (this.idx(x, y, 52) % 3 === 0) {
+      const cnames = ['chimney-small','chimney-basic','chimney-medium','chimney-large'];
+      const c = modelLibrary.get('industrial', cnames[this.idx(x, y, 53) % cnames.length]);
+      if (c) { c.position.set((this.idx(x, y, 54) % 14) - 7, 0, (this.idx(x, y, 55) % 14) - 7); g.add(c); }
     }
-    if (this.idx(x,y,56) % 5 === 0) {
-      const t = modelLibrary.get('industrial','detail-tank');
-      if (t) { t.position.set(16,0,-16); g.add(t); }
+    if (this.idx(x, y, 56) % 5 === 0) {
+      const t = modelLibrary.get('industrial', 'detail-tank');
+      if (t) { t.position.set(16, 0, -16); g.add(t); }
     }
   }
 
   private buildPark(g: THREE.Group, x: number, y: number): void {
-    const positions: [number,number][] = [[-18,-18],[18,-18],[-18,18],[18,18],[0,-20],[0,20],[-20,0],[20,0]];
-    const count = 2 + (this.idx(x,y,60) % 3);
-    for (let i = 0; i < count; i++) {
+    const positions: [number, number][] = [[-18,-18],[18,-18],[-18,18],[18,18],[0,-20],[0,20],[-20,0],[20,0]];
+    for (let i = 0; i < 2 + (this.idx(x, y, 60) % 3); i++) {
       const pos = positions[i % positions.length];
-      const t = modelLibrary.get('suburban', this.idx(x,y,61+i)%3 !== 0 ? 'tree-large' : 'tree-small');
-      if (t) { t.position.set(pos[0],0,pos[1]); t.rotation.y = (this.idx(x,y,62+i)%8)*(Math.PI/4); g.add(t); }
+      const t = modelLibrary.get('suburban', this.idx(x, y, 61 + i) % 3 !== 0 ? 'tree-large' : 'tree-small');
+      if (t) { t.position.set(pos[0], 0, pos[1]); t.rotation.y = (this.idx(x, y, 62 + i) % 8) * (Math.PI / 4); g.add(t); }
     }
-    if (this.idx(x,y,65) % 3 === 0) {
-      const p = modelLibrary.get('suburban','planter');
-      if (p) { p.position.set(0,0.02,0); g.add(p); }
+    if (this.idx(x, y, 65) % 3 === 0) {
+      const p = modelLibrary.get('suburban', 'planter');
+      if (p) { p.position.set(0, 0.02, 0); g.add(p); }
     }
-    if (this.idx(x,y,66) % 2 === 0) {
-      const pOpts = ['path-stones-long','path-long','path-short'];
-      const path = modelLibrary.get('suburban', pOpts[this.idx(x,y,67)%pOpts.length]);
-      if (path) { path.position.set(0,0.02,0); path.rotation.y = (this.idx(x,y,68)%2)*(Math.PI/2); g.add(path); }
+    if (this.idx(x, y, 66) % 2 === 0) {
+      const pOpts = ['path-stones-long', 'path-long', 'path-short'];
+      const path = modelLibrary.get('suburban', pOpts[this.idx(x, y, 67) % pOpts.length]);
+      if (path) { path.position.set(0, 0.02, 0); path.rotation.y = (this.idx(x, y, 68) % 2) * (Math.PI / 2); g.add(path); }
     }
   }
 

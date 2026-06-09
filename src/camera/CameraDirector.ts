@@ -44,8 +44,8 @@ export class CameraDirector {
       this.desiredTarget.z + Math.sin(this.orbitAngle) * radius,
     );
 
-    controls.target.lerp(this.desiredTarget, 0.012);
-    camera.position.lerp(this.desiredPosition, 0.010);
+    controls.target.lerp(this.desiredTarget, 0.01);
+    camera.position.lerp(this.desiredPosition, 0.008); // M3: Even smoother camera
     camera.lookAt(controls.target);
   }
 }

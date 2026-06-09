@@ -164,6 +164,11 @@ export class SceneManager {
                 });
                 this.cameraController.setCameraHeight(200);
 
+                // Fixed city mode - limit camera to city bounds
+                if (streamConfig.fixedCity) {
+                    console.log('[SceneManager] Fixed city mode enabled - Harbor’s End');
+                }
+
                 this.bInited = true;
                 this.inputMgr.on("mousewheel", (value: any) => {
                     if( !GVar.bCameraAnimState )

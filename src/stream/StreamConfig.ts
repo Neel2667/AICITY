@@ -10,6 +10,7 @@ export interface StreamConfig {
   atmosphereEnabled: boolean;
   cameraMode: 'manual' | 'tour';
   citySceneId: string;
+  buildingStyle: 'original' | 'kenney';
 }
 
 const params = new URLSearchParams(window.location.search);
@@ -33,4 +34,7 @@ export const streamConfig: StreamConfig = {
   cameraMode: (params.get('camera') === 'tour') ? 'tour' : 'manual',
   // Which pre-made city scene to load. ?scene=sf-street|rio|city-small|city-blocks
   citySceneId: params.get('scene') || 'rio',
+  // Building style for the fixed city: ?buildings=kenney to use CC0 Kenney
+  // buildings; default 'original' keeps the textured InfiniTown blocks.
+  buildingStyle: (params.get('buildings') === 'kenney') ? 'kenney' : 'original',
 };

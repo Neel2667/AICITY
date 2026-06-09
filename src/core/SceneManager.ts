@@ -19,6 +19,7 @@ import { streamConfig } from '../stream/StreamConfig';
 import { CameraDirector } from '../camera/CameraDirector';
 import { TourCamera } from '../camera/TourCamera';
 import { cityScene } from '../city/CityScene';
+import { kenneyBuildings, type KenneyGroup } from '../city/KenneyBuildings';
 //import TWEEN from 'three/examples/jsm/libs/tween.module.js'
 
 export class SceneManager {
@@ -186,6 +187,15 @@ export class SceneManager {
                     // Place EVERY chunk at its permanent position once, then never move.
                     this.refreshChunkScene();
                     // No SceneMoveController, no chunkmove handler → the city stays put.
+
+                    // Optionally swap the building in each chunk for a CC0 Kenney
+                    // building (?buildings=kenney). Roads/intersections stay original.
+                    if (streamConfig.buildingStyle === 'kenney') {
+                        kenneyBuildings.preload().then(() => {
+                            this.applyKenneyBuildings();
+                            console.log('[AICITY] Kenney buildings applied to fixed city');
+                        });
+                    }
 
                     // Manual camera framed to the whole fixed city.
                     this.cameraDirector = null;
@@ -552,6 +562,46 @@ export class SceneManager {
     }
 
     /** Keep the look-at target loosely within the city radius. */
+    /**
+     * Replace each chunk's original building with a CC0 Kenney building.
+     * Keeps the textured roads/intersections; only swaps the block. Deterministic
+     * per tile so the city is stable and districts cluster by area.
+     */
+    protected applyKenneyBuildings(): void {
+        if (!this.chunkScene || !kenneyBuildings.hasAny()) return;
+        const N = GVar.CHUNK_COUNT;
+        this.chunkScene.forEachChunk((container: any) => {
+            const chunk: any = container.getObjectByName('chunk');
+            if (!chunk) return;
+            const oldBlock: THREE.Object3D | undefined = chunk.block;
+            if (!oldBlock) return;
+
+            // tile position → district feel (centre = downtown, edges = suburb)
+            const cx = container.userData['centeredX'] ?? 0;
+            const cy = container.userData['centeredY'] ?? 0;
+            const distC = Math.max(Math.abs(cx), Math.abs(cy)) / (N / 2); // 0..1
+            const seed = Math.abs(Math.floor(Math.sin(cx * 49.3 + cy * 97.1) * 10000));
+
+            let group: KenneyGroup;
+            if (distC < 0.32)      group = (seed % 3 === 0) ? 'modular' : 'downtown';
+            else if (distC < 0.6)  group = (seed % 2 === 0) ? 'downtown' : 'suburb';
+            else                   group = (seed % 4 === 0) ? 'industrial' : 'suburb';
+
+            const names = kenneyBuildings.names(group);
+            if (!names.length) return;
+            const name = names[seed % names.length];
+            const building = kenneyBuildings.get(group, name);
+            if (!building) return;
+
+            // swap: remove original block, drop in the Kenney building
+            chunk.remove(oldBlock);
+            building.position.set(0, 0, 0);
+            building.rotation.y = (seed % 4) * (Math.PI / 2);
+            chunk.add(building);
+            chunk.block = building;
+        });
+    }
+
     /** Frame the manual camera over the whole fixed 16x16 city. */
     protected frameCameraToFixedCity(): void {
         const span = GVar.CHUNK_COUNT * GVar.CHUNK_SIZE; // 16 * 60 = 960

@@ -1,0 +1,23 @@
+{
+  "name": "aicity-chat-server",
+  "version": "0.3.0",
+  "description": "AICITY Live — Phase 3 YouTube chat WebSocket relay server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node --import tsx/esm chatServer.ts",
+    "dev":   "tsx watch chatServer.ts"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/ws": "^8.5.12",
+    "tsx": "^4.19.0",
+    "typescript": "~5.8.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

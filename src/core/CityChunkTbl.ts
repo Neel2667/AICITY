@@ -71,7 +71,10 @@ export class CityChunkTbl {
             }
         });
 
-        this._generate();
+        // Delay generation until map is loaded in fixed city mode
+        if (!this.isFixedCity) {
+            this._generate();
+        }
     }
 
     public async loadPersistentMap(): Promise<void> {

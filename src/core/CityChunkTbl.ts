@@ -31,7 +31,7 @@ export class CityChunkTbl {
 
     private mapLoader: CityMapLoader | null = null;
     private cityMap: any = null; // used for map-driven generation (Phase 1)
-    private isFixedCity: boolean = true; // Fixed bounded city mode - Harbor’s End (M2 - Persistent City - In Active Development)
+    private isFixedCity: boolean = true; // Fixed bounded city mode - Harbor’s End (M2 - Persistent City - Active)
 
     /**
      * 获取Chunks数据.

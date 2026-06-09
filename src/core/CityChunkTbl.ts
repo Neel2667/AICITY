@@ -224,6 +224,7 @@ export class CityChunkTbl {
      * @returns 城市块对象
      */
     // M2: Persistent City - Map driven chunk generation
+    // This method is used as fallback only
     private _genRandomChunk(x: number, y: number): THREE.Object3D {
         const matrix = new THREE.Matrix4();
         const matrixWorldInverse = new THREE.Matrix4().makeRotationY(Math.PI / 2);

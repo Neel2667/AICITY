@@ -1,4 +1,4 @@
-import type { StreamConfig } from '../stream/StreamConfig';
+
 
 export interface CityChunkData {
   x: number;
@@ -61,10 +61,10 @@ export class CityMapLoader {
 
   getChunkAt(x: number, y: number): CityChunkData | null {
     if (!this.map) return null;
-    return this.map.chunks.find(c => c.x === x && c.y === y) || null;
+    return this.map.chunks.find((c: any) => c.x === x && c.y === y) || null;
   }
 
   getAllChunks(): CityChunkData[] {
-    return this.map?.chunks || [];
+    return this.map ? this.map.chunks : [];
   }
 }

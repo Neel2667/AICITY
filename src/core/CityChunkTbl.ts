@@ -31,7 +31,7 @@ export class CityChunkTbl {
 
     private mapLoader: CityMapLoader | null = null;
     private cityMap: any = null; // used for map-driven generation (Phase 1)
-    private isFixedCity: boolean = true; // Fixed bounded city mode - Harbor’s End (M2 - Persistent City - In Progress - Chunk Quality Improvement)
+    private isFixedCity: boolean = true; // Fixed bounded city mode - Harbor’s End (M2 - Persistent City)
 
     /**
      * 获取Chunks数据.
@@ -379,4 +379,4 @@ export class CityChunkTbl {
         }
     }
 
-}
+    /**\n     * Generate chunk using persistent map data (M2 - Persistent City)\n     */\n    private _genChunkFromMap(x: number, y: number, mapChunk: any): THREE.Object3D {\n        const chunkIns = new THREE.Object3D();\n        chunkIns.name = \"chunk\";\n\n        // Try to find matching block from loaded assets\n        let block = this.keys.find((k: any) => \n            k.name.toLowerCase().includes(mapChunk.blockType.toLowerCase().split('_')[0])\n        ) || MiscFunc.getRandElement(this.keys);\n        \n        if (block) {\n            block = block.clone();\n            block.rotation.y = (mapChunk.rotation || 0) * (Math.PI / 2);\n            block.position.set(0, 0, 0);\n            chunkIns.add(block);\n            (chunkIns as any).block = block;\n        }\n\n        // Basic roads\n        if (this.lanes.length > 0) {\n            const road = MiscFunc.getRandElement(this.lanes).clone();\n            road.position.set(-30, 0, 10);\n            chunkIns.add(road);\n        }\n\n        if (this.intersections.length > 0) {\n            const intersection = MiscFunc.getRandElement(this.intersections).clone();\n            intersection.position.set(-30, 0, 30);\n            chunkIns.add(intersection);\n        }\n\n        // Fewer cars for cleaner look\n        if (this.carObjects.length > 0 && Math.random() < 0.2) {\n            const rawCar = MiscFunc.getRandElement(this.carObjects);\n            const carObj = rawCar.clone();\n            const carIns = new MobileCar(this, carObj, null);\n            chunkIns.add(carIns);\n            this.mobs.push(carIns);\n        }\n\n        return chunkIns;\n    }\n\n}

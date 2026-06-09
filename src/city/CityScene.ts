@@ -28,7 +28,7 @@ const FILES: Record<CitySceneId, string> = {
 };
 
 // Target footprint (largest horizontal dimension) in world units.
-const TARGET_SPAN = 900;
+const TARGET_SPAN = 600;
 
 export interface LoadedCity {
   group: THREE.Group;

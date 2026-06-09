@@ -32,5 +32,5 @@ export const streamConfig: StreamConfig = {
   //   ?camera=manual → free orbit/zoom/pan (default)
   cameraMode: (params.get('camera') === 'tour') ? 'tour' : 'manual',
   // Which pre-made city scene to load. ?scene=sf-street|rio|city-small|city-blocks
-  citySceneId: params.get('scene') || 'sf-street',
+  citySceneId: params.get('scene') || 'rio',
 };

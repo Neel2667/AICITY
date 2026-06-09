@@ -146,15 +146,12 @@ export class SceneManager {
                 if (this.useAuthoredCity) {
                     // ─── REAL ARTIST-DESIGNED CITY SCENE (not a tile grid) ─────────
                     // Load one complete pre-made city model (irregular streets, varied
-                    // density) and fly the camera around it.
+                    // density) and frame the camera so the WHOLE city is visible.
                     cityScene.load(streamConfig.citySceneId as any).then((loaded) => {
                         this.scene.add(loaded.group);
                         this.cityRadius = loaded.radius;
-                        // frame the camera to the loaded city size
-                        const r = Math.max(120, loaded.radius);
-                        this.cameraController.camera.position.set(r * 0.9, r * 0.8, r * 0.9);
-                        this.cameraController.getLookAtTarget().set(0, 0, 0);
-                        console.log('[AICITY] Real city scene loaded:', streamConfig.citySceneId);
+                        this.frameCameraToCity(loaded.box);
+                        console.log('[AICITY] Real city scene loaded:', streamConfig.citySceneId, '· radius', Math.round(loaded.radius));
                     }).catch((e) => console.error('[AICITY] city scene failed', e));
 
                     this.scene.add(this.dirLight);
@@ -168,8 +165,6 @@ export class SceneManager {
                         console.log('[AICITY] Guided tour camera active');
                     } else {
                         this.tourCamera = null;
-                        this.cameraController.camera.position.set(400, 360, 400);
-                        this.cameraController.getLookAtTarget().set(0, 0, 0);
                         this.cameraController.enableManual();
                         console.log('[AICITY] Manual camera active (drag/scroll/WASD). Add ?camera=tour for the guided tour.');
                     }
@@ -490,6 +485,34 @@ export class SceneManager {
             this.tourCamera = new TourCamera(this.cameraController);
             console.log('[AICITY] Camera → guided tour');
         }
+    }
+
+    /**
+     * Position the camera so the ENTIRE city bounding box fits in view.
+     * Uses the camera FOV to compute the required distance from the city centre.
+     */
+    protected frameCameraToCity(box: THREE.Box3): void {
+        const centre = new THREE.Vector3();
+        const size = new THREE.Vector3();
+        box.getCenter(centre);
+        box.getSize(size);
+
+        const cam = this.cameraController.camera;
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const fov = (cam.fov * Math.PI) / 180;
+        // distance needed to fit the largest dimension, with margin
+        let dist = (maxDim / 2) / Math.tan(fov / 2);
+        dist *= 1.6; // breathing room
+
+        // place camera at a pleasing isometric-ish angle above the city centre
+        cam.position.set(
+            centre.x + dist * 0.6,
+            centre.y + dist * 0.7,
+            centre.z + dist * 0.6,
+        );
+        cam.lookAt(centre);
+        this.cameraController.getLookAtTarget().copy(centre);
+        cam.updateProjectionMatrix();
     }
 
     /** Keep the look-at target loosely within the city radius. */

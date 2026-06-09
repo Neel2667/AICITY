@@ -215,7 +215,6 @@ export class ChatBot {
     };
     console.log('[ChatBot] Dev helper ready: window.__aicityChat("!vote park")');
   }
-}
 
   /**
    * Send a structured message to the chat server (for DB persistence and bot replies).
@@ -225,5 +224,6 @@ export class ChatBot {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
     try { this.ws.send(JSON.stringify(msg)); } catch { /* ignore */ }
   }
+}
 
 export const chatBot = new ChatBot();

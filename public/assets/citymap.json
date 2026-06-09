@@ -1,0 +1,112 @@
+{
+  "version": 1,
+  "cityName": "Harbor’s End",
+  "createdAt": "2026-06-09T00:00:00Z",
+  "currentDay": 1,
+  "districts": [
+    {
+      "id": "downtown",
+      "name": "Harbor Square",
+      "mood": "busy",
+      "center": { "x": 0, "y": 0 }
+    },
+    {
+      "id": "waterfront",
+      "name": "Lighthouse District",
+      "mood": "calm",
+      "center": { "x": -120, "y": 80 }
+    },
+    {
+      "id": "residential",
+      "name": "Maple Hill",
+      "mood": "quiet",
+      "center": { "x": 100, "y": -60 }
+    }
+  ],
+  "chunks": [
+    {
+      "x": 0,
+      "y": 0,
+      "district": "downtown",
+      "blockType": "mixed_use_01",
+      "rotation": 0,
+      "level": 2,
+      "name": "Harbor Plaza",
+      "construction": { "status": "complete", "progress": 100 }
+    },
+    {
+      "x": 1,
+      "y": 0,
+      "district": "downtown",
+      "blockType": "residential_02",
+      "rotation": 1,
+      "level": 1,
+      "name": "The Anchor Apartments",
+      "construction": { "status": "complete", "progress": 100 }
+    },
+    {
+      "x": -1,
+      "y": 1,
+      "district": "waterfront",
+      "blockType": "landmark_lighthouse",
+      "rotation": 0,
+      "level": 3,
+      "name": "Old Lighthouse",
+      "construction": { "status": "complete", "progress": 100 }
+    },
+    {
+      "x": -2,
+      "y": 0,
+      "district": "waterfront",
+      "blockType": "residential_01",
+      "rotation": 0,
+      "level": 1,
+      "name": "Fisherman’s Wharf",
+      "construction": { "status": "complete", "progress": 100 }
+    },
+    {
+      "x": 0,
+      "y": 1,
+      "district": "downtown",
+      "blockType": "commercial_01",
+      "rotation": 0,
+      "level": 2,
+      "name": "Market Hall",
+      "construction": { "status": "complete", "progress": 100 }
+    },
+    {
+      "x": 2,
+      "y": 0,
+      "district": "residential",
+      "blockType": "residential_03",
+      "rotation": 2,
+      "level": 1,
+      "name": "Maple Row Homes",
+      "construction": { "status": "complete", "progress": 100 }
+    },
+    {
+      "x": 1,
+      "y": 1,
+      "district": "residential",
+      "blockType": "park_01",
+      "rotation": 0,
+      "level": 1,
+      "name": "Quiet Gardens",
+      "construction": { "status": "complete", "progress": 100 }
+    },
+    {
+      "x": -1,
+      "y": 0,
+      "district": "waterfront",
+      "blockType": "mixed_use_02",
+      "rotation": 3,
+      "level": 1,
+      "name": "Pier Café",
+      "construction": { "status": "complete", "progress": 100 }
+    }
+  ],
+  "meta": {
+    "population": 1240,
+    "growthRate": 2.3
+  }
+}

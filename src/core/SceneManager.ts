@@ -191,15 +191,6 @@ export class SceneManager {
                     this.refreshChunkScene();
                     // No SceneMoveController, no chunkmove handler → the city stays put.
 
-                    // Optionally swap the building in each chunk for a CC0 Kenney
-                    // building (?buildings=kenney). Roads/intersections stay original.
-                    if (streamConfig.buildingStyle === 'kenney') {
-                        kenneyBuildings.preload().then(() => {
-                            this.applyKenneyBuildings();
-                            console.log('[AICITY] Kenney buildings applied to fixed city');
-                        });
-                    }
-
                     // Manual camera framed to the whole fixed city.
                     this.cameraDirector = null;
                     this.smController = null;

@@ -443,6 +443,15 @@ export class SceneManager {
             this.updateAtmosphere(clockSnapshot, weatherSnapshot);
         }
 
+        // M3: Enhanced atmosphere for stream quality
+        if (this.dirLight && clockSnapshot) {
+            const time = clockSnapshot.timeOfDay;
+            if (time > 0.7 && time < 0.85) {
+                // Sunset enhancement
+                this.dirLight.intensity = Math.max(this.dirLight.intensity, 0.6);
+            }
+        }
+
         // 更新相机跟限：
         this.updateFollow();
 

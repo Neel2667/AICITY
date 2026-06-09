@@ -95,6 +95,13 @@ export class CityChunkTbl {
             if (!mapChunk) return null;
         }
         
+        // In fixed city mode, do not wrap around
+        if (this.isFixedCity) {
+            if (x < 0 || y < 0) return null;
+            if (!this.chunks[x] || !this.chunks[x][y]) return null;
+            return this.chunks[x][y];
+        }
+        
         x = x % GVar.TABLE_SIZE;
         y = y % GVar.TABLE_SIZE;
         if (x < 0) x = GVar.TABLE_SIZE + x;

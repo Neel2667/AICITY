@@ -175,6 +175,11 @@ export class SceneManager {
                         this.cameraController.updateHeight(value.deltaY * .05);
                 });
 
+                // Load persistent city map (fixed city mode)
+                if (streamConfig.fixedCity && this.cityChkTbl) {
+                    this.cityChkTbl.loadPersistentMap();
+                }
+
                 // 处理点击效果：
                 this.inputMgr.on("startdrag", (evt: any) => {
                     this.onMousePickCar(evt);

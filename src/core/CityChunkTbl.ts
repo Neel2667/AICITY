@@ -90,6 +90,7 @@ export class CityChunkTbl {
             this.mobs = [];
             this._generate();
             console.log('[CityChunkTbl] City regenerated from persistent map');
+            console.log('[M2] Fixed city active with', this.cityMap.chunks.length, 'chunks');
         }
     }
 

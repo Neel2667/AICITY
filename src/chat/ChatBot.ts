@@ -217,4 +217,13 @@ export class ChatBot {
   }
 }
 
+  /**
+   * Send a structured message to the chat server (for DB persistence and bot replies).
+   * Safe to call even when disconnected (no-op).
+   */
+  public sendToServer(msg: object): void {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    try { this.ws.send(JSON.stringify(msg)); } catch { /* ignore */ }
+  }
+
 export const chatBot = new ChatBot();

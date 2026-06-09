@@ -1,117 +1,66 @@
-# AICITY Chat Server — Setup Guide (Phase 3)
+# AICITY Server — Setup Guide (Phase 5)
 
-## Prerequisites
-
-- Node.js 20+
-- A Google Cloud project with **YouTube Data API v3** enabled
-- A YouTube channel with an **active live stream**
-- (Optional) A bot YouTube account for posting replies
-
----
-
-## Step 1 — Get Your YouTube API Key
-
-1. Go to [console.cloud.google.com](https://console.cloud.google.com)
-2. Create a project → Enable **YouTube Data API v3**
-3. Go to **Credentials** → Create **API Key**
-4. Copy the key (starts with `AIza...`)
-
----
-
-## Step 2 — Get Your Live Chat ID
-
-When your YouTube stream is live, run this in your browser console or via curl:
-
-```
-https://www.googleapis.com/youtube/v3/liveBroadcasts
-  ?part=snippet
-  &broadcastStatus=active
-  &key=YOUR_API_KEY
-```
-
-The `snippet.liveChatId` field is your `LIVE_CHAT_ID`.
-
-Or find it in YouTube Studio → Go Live → Chat → Copy Chat ID from the URL.
-
----
-
-## Step 3 — Install & Run
+## Install
 
 ```bash
 cd server
 npm install
-YOUTUBE_API_KEY=AIza... LIVE_CHAT_ID=Cg0KC... npm run dev
 ```
 
-The server starts on `ws://localhost:3717` by default.
-
----
-
-## Step 4 — Run the Frontend
-
-In a separate terminal:
-
-```bash
-# root of repo
-npm install
-npm run dev
-```
-
-Open the browser. The frontend auto-connects to `ws://localhost:3717`.
-
----
-
-## Environment Variables
+## Required environment variables
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `YOUTUBE_API_KEY` | Yes (for live chat) | — | Google API key |
-| `LIVE_CHAT_ID` | Yes (for live chat) | — | YouTube live chat ID |
+| `YOUTUBE_API_KEY` | For live chat | — | Google Cloud API key |
+| `LIVE_CHAT_ID` | For live chat | — | YouTube live chat ID |
 | `CHAT_SERVER_PORT` | No | `3717` | WebSocket port |
-| `POLL_INTERVAL_MS` | No | `3000` | YouTube API polling interval (ms) |
+| `ADMIN_PORT` | No | `3718` | Admin REST API port |
+| `ADMIN_SECRET` | No | `aicity-dev-secret` | Admin panel auth token |
+| `POLL_INTERVAL_MS` | No | `3000` | YouTube API poll rate |
+| `DB_PATH` | No | `../aicity.db` | SQLite database path |
 
----
+## Start (dev)
 
-## Dev Mode (No YouTube Account Needed)
-
-Without env vars set, the server still starts and accepts WebSocket connections.
-Use the browser console to inject fake chat messages:
-
-```js
-window.__aicityChat('!vote park', 'Alice', 'channel-alice')
-window.__aicityChat('!vote apartments', 'Bob', 'channel-bob')
-window.__aicityChat('!name Sunset Tower', 'Carol', 'channel-carol')
-window.__aicityChat('!camera follow', 'Dave', 'channel-dave')
+```bash
+YOUTUBE_API_KEY=AIza... LIVE_CHAT_ID=Cg0KC... npm run dev
 ```
 
-A vote poll opens automatically every 10 minutes (or trigger it via dev tools).
+## Start (production)
 
----
+```bash
+YOUTUBE_API_KEY=AIza... LIVE_CHAT_ID=Cg0KC... ADMIN_SECRET=strong-secret npm start
+```
 
-## Supported Chat Commands
+## OAuth Bot Setup (one-time, for bot replies to YouTube chat)
 
-| Command | Description | Cooldown |
-|---|---|---|
-| `!vote park` | Vote in current poll | 1 per poll |
-| `!vote apartments` | Vote in current poll | 1 per poll |
-| `!vote factory` | Vote in current poll | 1 per poll |
-| `!vote shops` | Vote in current poll | 1 per poll |
-| `!vote stadium` | Vote in current poll (once only) | 1 per poll |
-| `!name <text>` | Submit a building/road name | 2 min |
-| `!camera orbit` | Vote for orbit camera | 30 sec |
-| `!camera follow` | Vote to follow a vehicle | 30 sec |
-| `!camera district` | Vote for district flyover | 30 sec |
-| `!camera event` | Vote for event camera | 30 sec |
-| `!event fireworks` | Request fireworks (Super Chat / mod only) | 5 min |
-| `!where` | City status reply | 15 sec |
-| `!mayor` | Enter the mayor raffle (runs every 30 min) | 1 hr |
+1. Create a **Desktop App** OAuth 2.0 credential in Google Cloud Console
+2. Download `credentials.json` → place in `server/auth/credentials.json`
+3. Run: `npm run auth` → opens browser → log in with your **bot YouTube account**
+4. Token saved to `server/auth/token.json` — restart server
 
----
+## Admin Panel
 
-## Poll Flow
+Open `server/admin/index.html` in any browser.
+Enter your `ADMIN_SECRET` and click **Connect**.
 
-1. Server auto-opens a poll every 10 minutes
-2. Viewers type `!vote <option>` for 60 seconds
-3. Winning option triggers a construction project in CityState
-4. ChatOverlay shows live tally bars with percentages
-5. 5-minute cooldown before next poll
+Features:
+- Live city state (day, population, buildings, districts)
+- Active construction projects
+- Add new construction projects
+- Broadcast messages to stream ticker + YouTube chat
+- Trigger fireworks remotely
+- Open a poll remotely
+- View chat log (last 100 messages)
+- View vote + mayor history
+- Block / unblock channel IDs
+
+## Dev Mode (no YouTube)
+
+Without env vars, the server still works. Use the browser console:
+
+```js
+window.__aicityChat('!vote park', 'Alice', 'ch-alice')
+window.__aicityChat('!camera follow', 'Bob', 'ch-bob')
+window.__aicityChat('!event fireworks', 'Mod', 'ch-mod')
+window.__aicityChat('!where', 'Carol', 'ch-carol')
+```

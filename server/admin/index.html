@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AICITY Admin Panel</title>
+<style>
+  :root { --bg:#0b1026; --card:#141e3a; --accent:#4fc3f7; --gold:#ffca28; --red:#ef5350; --green:#66bb6a; --text:#fff7e8; --muted:rgba(255,247,232,.55); }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;font-size:14px;min-height:100vh;}
+  header{background:var(--card);border-bottom:1px solid rgba(255,255,255,.08);padding:14px 24px;display:flex;align-items:center;gap:16px;}
+  header h1{font-size:18px;font-weight:800;color:var(--accent);}
+  .badge{background:rgba(79,195,247,.18);border:1px solid rgba(79,195,247,.35);border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700;color:var(--accent);}
+  .badge.offline{background:rgba(239,83,80,.12);border-color:rgba(239,83,80,.3);color:var(--red);}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;padding:20px;}
+  .card{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:18px 20px;}
+  .card h2{font-size:13px;font-weight:800;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;}
+  .stat{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06);}
+  .stat:last-child{border:none;}
+  .stat-val{font-weight:800;color:var(--accent);}
+  button{border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .15s;}
+  button:hover{opacity:.8;}
+  .btn-blue{background:var(--accent);color:#0b1026;}
+  .btn-gold{background:var(--gold);color:#0b1026;}
+  .btn-red{background:var(--red);color:#fff;}
+  .btn-green{background:var(--green);color:#0b1026;}
+  input,textarea{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;width:100%;margin-bottom:8px;}
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;}
+  .log-line{padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .log-line .author{color:rgba(130,200,255,.9);font-weight:700;}
+  .log-line .super{color:var(--gold);font-weight:700;}
+  .district{display:flex;align-items:center;gap:8px;padding:5px 0;}
+  .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .dot.unlocked{background:var(--green);}
+  .dot.locked{background:var(--red);}
+  .construction-row{padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+  .construction-row .label{font-weight:700;}
+  .construction-row .meta{color:var(--muted);font-size:12px;}
+  #toast{position:fixed;bottom:24px;right:24px;background:var(--green);color:#0b1026;font-weight:800;padding:10px 20px;border-radius:10px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;}
+  #toast.show{opacity:1;}
+  .secret-row{display:flex;gap:8px;align-items:center;margin-bottom:16px;}
+  .secret-row input{margin:0;}
+</style>
+</head>
+<body>
+<header>
+  <h1>🏙️ AICITY Admin</h1>
+  <span id="connBadge" class="badge offline">● Disconnected</span>
+  <span style="margin-left:auto;color:var(--muted);font-size:12px;">Admin API: <code>localhost:3718</code></span>
+</header>
+
+<div style="padding:16px 20px 0;max-width:560px;">
+  <div class="secret-row">
+    <input id="secretInput" type="password" placeholder="Admin secret (default: aicity-dev-secret)" value="aicity-dev-secret" />
+    <button class="btn-blue" onclick="loadAll()">Connect</button>
+  </div>
+</div>
+
+<div class="grid">
+
+  <!-- City State -->
+  <div class="card">
+    <h2>City State</h2>
+    <div class="stat"><span>City Name</span><span class="stat-val" id="cityName">—</span></div>
+    <div class="stat"><span>Day Number</span><span class="stat-val" id="dayNumber">—</span></div>
+    <div class="stat"><span>Population</span><span class="stat-val" id="population">—</span></div>
+    <div class="stat"><span>Buildings</span><span class="stat-val" id="buildings">—</span></div>
+  </div>
+
+  <!-- Districts -->
+  <div class="card">
+    <h2>Districts</h2>
+    <div id="districtList"></div>
+  </div>
+
+  <!-- Construction -->
+  <div class="card">
+    <h2>Active Construction</h2>
+    <div id="constructionList"></div>
+    <div style="margin-top:12px;">
+      <input id="conLabel" placeholder="Project label" />
+      <div class="btn-row">
+        <button class="btn-green" onclick="addConstruction()">+ Add Project</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Broadcast -->
+  <div class="card">
+    <h2>Broadcast to Stream</h2>
+    <textarea id="broadcastText" rows="2" placeholder="Message to show in ticker + YouTube chat"></textarea>
+    <div class="btn-row">
+      <button class="btn-blue" onclick="sendBroadcast()">📢 Broadcast</button>
+      <button class="btn-gold" onclick="triggerFireworks()">🎆 Fireworks (15s)</button>
+      <button class="btn-blue" onclick="openPoll()">🗳️ Open Poll</button>
+    </div>
+  </div>
+
+  <!-- Chat Log -->
+  <div class="card" style="grid-column: span 2;">
+    <h2>Live Chat Log <button class="btn-blue" style="font-size:11px;padding:4px 10px;float:right;" onclick="loadChat()">Refresh</button></h2>
+    <div id="chatLog"></div>
+  </div>
+
+  <!-- Vote History -->
+  <div class="card">
+    <h2>Vote History</h2>
+    <div id="voteHistory"></div>
+  </div>
+
+  <!-- Mayor History -->
+  <div class="card">
+    <h2>Mayor History</h2>
+    <div id="mayorHistory"></div>
+  </div>
+
+  <!-- Block/Unblock -->
+  <div class="card">
+    <h2>Moderation</h2>
+    <input id="blockId" placeholder="Channel ID to block/unblock" />
+    <div class="btn-row">
+      <button class="btn-red"   onclick="blockUser()">🚫 Block</button>
+      <button class="btn-green" onclick="unblockUser()">✅ Unblock</button>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast">Done!</div>
+
+<script>
+const API = 'http://localhost:3718';
+let SECRET = 'aicity-dev-secret';
+
+function headers() {
+  SECRET = document.getElementById('secretInput').value || SECRET;
+  return { 'Authorization': SECRET, 'Content-Type': 'application/json' };
+}
+
+async function get(path) {
+  try { return await (await fetch(API+path,{headers:headers()})).json(); }
+  catch(e){ return null; }
+}
+async function post(path, body={}) {
+  try {
+    const r = await fetch(API+path,{method:'POST',headers:headers(),body:JSON.stringify(body)});
+    return await r.json();
+  } catch(e){ return null; }
+}
+
+function toast(msg='Done!') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 2500);
+}
+
+async function loadAll() {
+  const state = await get('/state');
+  if (!state) { document.getElementById('connBadge').textContent='● Disconnected'; document.getElementById('connBadge').className='badge offline'; return; }
+  document.getElementById('connBadge').textContent='● Connected'; document.getElementById('connBadge').className='badge';
+
+  const m = state.meta;
+  document.getElementById('cityName').textContent   = m.cityName;
+  document.getElementById('dayNumber').textContent  = 'Day ' + m.dayNumber;
+  document.getElementById('population').textContent = m.population.toLocaleString();
+  document.getElementById('buildings').textContent  = m.buildings;
+
+  // Districts
+  const dEl = document.getElementById('districtList');
+  dEl.innerHTML = state.districts.map(d =>
+    `<div class="district"><div class="dot ${d.unlocked?'unlocked':'locked'}"></div><span>${d.name}</span><span style="margin-left:auto;font-size:11px;color:var(--muted)">${d.unlocked?'Unlocked':'Locks Day '+d.unlockDay}</span></div>`
+  ).join('');
+
+  // Construction
+  const cEl = document.getElementById('constructionList');
+  cEl.innerHTML = state.construction.length
+    ? state.construction.map(c=>
+        `<div class="construction-row"><div class="label">${c.label}</div><div class="meta">Chunk (${c.chunkX},${c.chunkY}) · Completes Day ${c.completionDay}</div></div>`
+      ).join('')
+    : '<div style="color:var(--muted)">No active projects</div>';
+
+  await loadChat();
+  await loadHistory();
+}
+
+async function loadChat() {
+  const data = await get('/chat');
+  if (!data) return;
+  document.getElementById('chatLog').innerHTML = data.slice(0,30).map(m=>
+    `<div class="log-line">${m.is_superchat?'<span class="super">💛 SUPER</span> ':''}` +
+    `<span class="author">${m.author_name}:</span> ${m.text}</div>`
+  ).join('');
+}
+
+async function loadHistory() {
+  const votes = await get('/votes');
+  document.getElementById('voteHistory').innerHTML = votes
+    ? votes.slice(0,10).map(v=>`<div class="stat"><span>${v.winner}</span><span class="stat-val">${v.total_votes} votes</span></div>`).join('')
+    : '<div style="color:var(--muted)">None yet</div>';
+
+  const mayors = await get('/mayors');
+  document.getElementById('mayorHistory').innerHTML = mayors
+    ? mayors.slice(0,5).map(m=>`<div class="stat"><span>👤 ${m.author_name}</span><span class="stat-val">Day ${m.day_number}</span></div>`).join('')
+    : '<div style="color:var(--muted)">None yet</div>';
+}
+
+async function sendBroadcast() {
+  const text = document.getElementById('broadcastText').value.trim();
+  if (!text) return;
+  await post('/broadcast', { text });
+  document.getElementById('broadcastText').value = '';
+  toast('📢 Broadcast sent!');
+}
+
+async function triggerFireworks() {
+  await post('/fireworks', { duration: 15 });
+  toast('🎆 Fireworks launched!');
+}
+
+async function openPoll() {
+  await post('/poll/open', { question: 'What should the city build next?' });
+  toast('🗳️ Poll opened!');
+}
+
+async function addConstruction() {
+  const label = document.getElementById('conLabel').value.trim();
+  if (!label) return;
+  const state = await get('/state');
+  const day = state?.meta?.dayNumber ?? 1;
+  await post('/construction/add', { chunkX:4, chunkY:4, label, startDay:day, completionDay:day+3 });
+  document.getElementById('conLabel').value = '';
+  toast('🏗️ Project added!');
+  loadAll();
+}
+
+async function blockUser() {
+  const id = document.getElementById('blockId').value.trim();
+  if (!id) return;
+  await post('/block', { channelId: id });
+  toast('🚫 Blocked: ' + id);
+}
+
+async function unblockUser() {
+  const id = document.getElementById('blockId').value.trim();
+  if (!id) return;
+  await post('/unblock', { channelId: id });
+  toast('✅ Unblocked: ' + id);
+}
+
+// Auto-refresh every 15s
+loadAll();
+setInterval(loadAll, 15000);
+</script>
+</body>
+</html>

@@ -1,25 +1,28 @@
 /**
- * main.ts — AICITY Live Phase 4
- * Adds: PedestrianManager, BusManager, FireworksController, AmbientAudio
- * Enhanced CameraDirector with 5 modes responds to all city events.
+ * main.ts — AICITY Live Phase 5
+ * Adds: SQLite-backed persistence (via server stateSnapshot),
+ * TrafficLightManager, ClipRecorder, admin WS message handlers,
+ * dayAdvance sync to server, constructionComplete sync.
  */
-import { SceneManager }       from './core/SceneManager';
-import { CubeObject }         from './objects/CubeObject';
-import { setupUI }            from './ui/Controls';
-import { setupFPSCounter }    from './utils/fpsCounter';
-import { CityClock }          from './stream/CityClock';
-import { streamConfig }       from './stream/StreamConfig';
-import { StreamOverlay }      from './stream/StreamOverlay';
-import { getWeatherFor }      from './weather/WeatherState';
-import { CityState }          from './city/CityState';
-import { CityEventBus }       from './city/CityEventBus';
-import { chatBot }            from './chat/ChatBot';
-import { ChatOverlay }        from './chat/ChatOverlay';
-import { voteManager }        from './chat/VoteManager';
-import { BusManager }         from './bus/BusManager';
-import { FireworksController } from './effects/Fireworks';
-import { ambientAudio }       from './audio/AmbientAudio';
-import { PedestrianManager }  from './pedestrians/PedestrianManager';
+import { SceneManager }          from './core/SceneManager';
+import { CubeObject }            from './objects/CubeObject';
+import { setupUI }               from './ui/Controls';
+import { setupFPSCounter }       from './utils/fpsCounter';
+import { CityClock }             from './stream/CityClock';
+import { streamConfig }          from './stream/StreamConfig';
+import { StreamOverlay }         from './stream/StreamOverlay';
+import { getWeatherFor }         from './weather/WeatherState';
+import { CityState }             from './city/CityState';
+import { CityEventBus }          from './city/CityEventBus';
+import { chatBot }               from './chat/ChatBot';
+import { ChatOverlay }           from './chat/ChatOverlay';
+import { voteManager }           from './chat/VoteManager';
+import { BusManager }            from './bus/BusManager';
+import { FireworksController }   from './effects/Fireworks';
+import { ambientAudio }          from './audio/AmbientAudio';
+import { PedestrianManager }     from './pedestrians/PedestrianManager';
+import { TrafficLightManager }   from './traffic/TrafficLightManager';
+import { clipRecorder }          from './clips/ClipRecorder';
 
 // ─── Core ─────────────────────────────────────────────────────────────────────
 const container     = document.getElementById('app') as HTMLElement;
@@ -28,35 +31,74 @@ const sceneManager  = new SceneManager(container);
 const streamOverlay = streamConfig.overlayEnabled ? new StreamOverlay(streamConfig) : null;
 const chatOverlay   = new ChatOverlay();
 
-// ─── Phase 4 subsystems ───────────────────────────────────────────────────────
+// ─── Phase 5 subsystems ───────────────────────────────────────────────────────
 const busManager      = new BusManager(sceneManager.scene);
 const fireworks       = new FireworksController(sceneManager.scene);
 const pedManager      = new PedestrianManager(sceneManager.scene);
+const trafficLights   = new TrafficLightManager(sceneManager.scene);
 
-// Spawn buses and pedestrians (after scene is ready — brief defer)
+// Give clip recorder access to the Three.js canvas
+setTimeout(() => {
+  const canvas = document.querySelector('canvas') as HTMLCanvasElement;
+  if (canvas) clipRecorder.setCanvas(canvas);
+}, 600);
+
+// Spawn all subsystems after asset load (brief defer)
 setTimeout(() => {
   busManager.spawn();
   pedManager.spawnInitial();
-  console.log('[AICITY] Phase 4 subsystems spawned');
-}, 500);
+  trafficLights.spawn(['downtown', 'maple', 'harbor', 'midtown']); // unlocked districts
+  console.log('[AICITY] Phase 5 subsystems spawned');
+}, 600);
 
-// ─── Chat bot ─────────────────────────────────────────────────────────────────
+// ─── Chat bot + server sync ───────────────────────────────────────────────────
 if (streamConfig.streamMode) chatBot.connect();
 
-// ─── Audio: start on first user interaction ───────────────────────────────────
-function startAudioOnInteraction() {
-  if (!ambientAudio.isStarted()) {
-    ambientAudio.start();
-    window.removeEventListener('click',   startAudioOnInteraction);
-    window.removeEventListener('keydown', startAudioOnInteraction);
+// Handle server-pushed messages (state snapshot on reconnect, admin commands)
+CityEventBus.on('serverMessage', (p) => {
+  const type = p['type'] as string;
+  if (type === 'stateSnapshot') {
+    const snap = p['payload'] as any;
+    if (snap?.meta) {
+      console.log(`[AICITY] Server snapshot: Day ${snap.meta.dayNumber} · Pop ${snap.meta.population}`);
+    }
   }
-}
-window.addEventListener('click',   startAudioOnInteraction);
-window.addEventListener('keydown', startAudioOnInteraction);
+  if (type === 'adminMessage') {
+    streamOverlay && CityEventBus.emit('adminTicker', { text: p['text'] });
+  }
+  if (type === 'adminFireworks') {
+    fireworks.show(p['duration'] as number ?? 15);
+  }
+  if (type === 'adminOpenPoll') {
+    voteManager.openPoll(p['question'] as string);
+  }
+  if (type === 'constructionAdded') {
+    CityState.addConstruction({
+      chunkX: p['chunkX'] as number, chunkY: p['chunkY'] as number,
+      label: p['label'] as string,
+      startDayNumber: p['startDay'] as number,
+      completionDayNumber: p['completionDay'] as number,
+    });
+  }
+  if (type === 'tickerPush') {
+    CityEventBus.emit('tickerPush', { text: p['text'] });
+  }
+});
 
-// ─── Auto-poll timer ──────────────────────────────────────────────────────────
-const AUTO_POLL_INTERVAL_MS = 10 * 60_000;
+// ─── Audio ────────────────────────────────────────────────────────────────────
+function startAudio() {
+  if (!ambientAudio.isStarted()) { ambientAudio.start(); }
+  window.removeEventListener('click',   startAudio);
+  window.removeEventListener('keydown', startAudio);
+}
+window.addEventListener('click',   startAudio);
+window.addEventListener('keydown', startAudio);
+(window as any).__aicityAudio = ambientAudio;
+
+// ─── Auto-poll ────────────────────────────────────────────────────────────────
+const AUTO_POLL_MS = 10 * 60_000;
 let lastAutoPollAt = 0;
+let lastDayNumber  = 1;
 
 // ─── Dev mode ─────────────────────────────────────────────────────────────────
 if (streamConfig.devMode) {
@@ -69,12 +111,6 @@ if (streamConfig.devMode) {
 }
 
 // ─── City event listeners ─────────────────────────────────────────────────────
-CityEventBus.on('constructionComplete', (p) =>
-  console.log(`[AICITY] 🏗️ ${p['label']} complete`));
-
-CityEventBus.on('districtUnlocked', (p) =>
-  console.log(`[AICITY] 🗺️ ${p['name']} unlocked`));
-
 CityEventBus.on('buildVoteWon', (p) => {
   const snap = CityState.getSnapshot();
   CityState.addConstruction({
@@ -83,19 +119,25 @@ CityEventBus.on('buildVoteWon', (p) => {
     startDayNumber: snap.dayNumber,
     completionDayNumber: snap.dayNumber + 3,
   });
+  // Sync vote result to server for DB persistence
+  chatBot.sendToServer({ type: 'voteResult', pollId: p['pollId'] ?? '', winner: p['buildType'], totalVotes: p['totalVotes'] ?? 0, dayNumber: snap.dayNumber });
 });
 
-CityEventBus.on('fireworksRequested', () => {
-  fireworks.show(20);
+CityEventBus.on('fireworksRequested', () => fireworks.show(20));
+CityEventBus.on('districtUnlocked', (p) => {
+  fireworks.show(12);
+  trafficLights.addForDistrict(p['districtId'] as string);
 });
-
-// Milestone fireworks: district unlock
-CityEventBus.on('districtUnlocked', () => fireworks.show(12));
-
-// Milestone fireworks: construction complete
-CityEventBus.on('constructionComplete', () => fireworks.show(8));
-
-// Camera follow a bus on vote
+CityEventBus.on('constructionComplete', (p) => {
+  fireworks.show(8);
+  chatBot.sendToServer({ type: 'constructionComplete', constructionId: p['id'] ?? 0, label: p['label'] ?? '' });
+});
+CityEventBus.on('mayorElected', (p) => {
+  chatBot.sendToServer({ type: 'mayorElected', channelId: p['channelId'], authorName: p['authorName'] ?? 'Unknown' });
+});
+CityEventBus.on('viewerContribution', (p) => {
+  chatBot.sendToServer({ type: 'viewerContribution', ...p as any });
+});
 CityEventBus.on('cameraVote', (p) => {
   if (p['mode'] === 'follow') {
     const bus = busManager.getRandomBus();
@@ -113,29 +155,30 @@ function animate() {
   CityState.tick(clockSnapshot.dayNumber);
   const citySnap = CityState.getSnapshot();
 
+  // Sync day advance to server
+  if (clockSnapshot.dayNumber !== lastDayNumber) {
+    lastDayNumber = clockSnapshot.dayNumber;
+    chatBot.sendToServer({ type: 'dayAdvance', dayNumber: clockSnapshot.dayNumber });
+  }
+
   // Auto-poll
   const now = Date.now();
-  if (now - lastAutoPollAt > AUTO_POLL_INTERVAL_MS &&
-      !voteManager.isPollOpen() && !voteManager.isInCooldown()) {
+  if (now - lastAutoPollAt > AUTO_POLL_MS && !voteManager.isPollOpen() && !voteManager.isInCooldown()) {
     if (voteManager.openPoll()) lastAutoPollAt = now;
   }
 
-  // Update audio
   ambientAudio.update(clockSnapshot, weatherSnapshot);
-
-  // Update overlays
   streamOverlay?.update(clockSnapshot, weatherSnapshot, citySnap);
   chatOverlay.update(clockSnapshot, citySnap);
 
-  // Update Phase 4 subsystems
   const ud = sceneManager.getLastUpdate();
   if (ud) {
     busManager.update(ud, clockSnapshot);
     pedManager.update(ud, clockSnapshot);
     fireworks.update(ud);
+    trafficLights.update(ud);
   }
 
-  // Update scene (atmosphere + camera director + chunk mobs)
   sceneManager.update(clockSnapshot, weatherSnapshot);
 }
 

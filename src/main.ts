@@ -2,33 +2,41 @@ import { SceneManager } from './core/SceneManager';
 import { CubeObject } from './objects/CubeObject';
 import { setupUI } from './ui/Controls';
 import { setupFPSCounter } from './utils/fpsCounter';
+import { CityClock } from './stream/CityClock';
+import { streamConfig } from './stream/StreamConfig';
+import { StreamOverlay } from './stream/StreamOverlay';
+import { getWeatherFor } from './weather/WeatherState';
 
-// 初始化场景
 const container = document.getElementById('app') as HTMLElement;
+const cityClock = new CityClock(streamConfig);
 const sceneManager = new SceneManager(container);
+const streamOverlay = streamConfig.overlayEnabled ? new StreamOverlay(streamConfig) : null;
 
+if (streamConfig.devMode) {
+  setupUI({
+    addCube: () => {
+      const newCube = new CubeObject();
+      sceneManager.addObject(newCube);
+    },
+    addSphere: () => {
+      // Reserved for future development-only diagnostics.
+    },
+    resetScene: () => {
+      sceneManager.removeAllObjects();
+    },
+  });
 
-// 设置UI
-setupUI({
-  addCube: () => {
-    const newCube = new CubeObject();
-    sceneManager.addObject(newCube);
-  },
-  addSphere: () => {
-  },
-  resetScene: () => {
-    sceneManager.removeAllObjects();
+  setupFPSCounter();
+}
 
-  }
-});
-
-// 设置FPS计数器
-setupFPSCounter();
-
-// 动画循环
 function animate() {
   requestAnimationFrame(animate);
-  sceneManager.update();
+
+  const clockSnapshot = cityClock.getSnapshot();
+  const weatherSnapshot = getWeatherFor(clockSnapshot);
+
+  streamOverlay?.update(clockSnapshot, weatherSnapshot);
+  sceneManager.update(clockSnapshot, weatherSnapshot);
 }
 
 animate();

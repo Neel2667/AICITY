@@ -1,77 +1,83 @@
-# 🚀InfiniTownTS
-> 🌍 [简体中文说明 / 中文版 README](./readme_zh_cn.md)
+# AICITY Live
 
-An open-source TypeScript implementation of the Three.js Infinite City demo.  This project closely replicates the core logic and algorithmic brilliance of the original InfiniTown while enhancing camera control, animation, car interaction, and scene rotation features. It is also built using the latest version of the Three.js engine.
+AICITY Live is a 24/7 YouTube live-city project built on the Three.js/TypeScript foundation from InfiniTownTS.
 
+The product goal is not to make a random procedural demo. The goal is to create a persistent miniature city that feels like a real place: named districts, recurring landmarks, cinematic camera direction, day/night/weather ambience, visible growth, and later YouTube chat interaction.
 
-[Visit the original InfiniTown demo by Little Workshop](https://demos.littleworkshop.fr/infinitown)
+## Current Phase
 
+**Phase 1 — Watchable Stream MVP**
 
-## 🌐 Live Demo
-[🔗Try the open-source TypeScript version of InfiniTown](https://osoker.github.io/InfiniTownTS/)
+Implemented in this repo:
 
-## 📥 Installation
+- Three.js + TypeScript + Vite base.
+- Stream-first page title and layout.
+- `CityClock` with a 60-minute city day.
+- Live overlay with city time, day counter, weather, and stream ticker.
+- Day/night atmosphere controller.
+- Weather-lite state: clear, cloudy, morning fog, light rain metadata.
+- Automatic cinematic `CameraDirector` for hands-free OBS streaming.
+- Dev UI hidden by default; use `?dev=1` to show dev diagnostics.
 
-### 1️⃣ Clone the repository
-
-```bash
-git clone https://github.com/osoker/InfiniTownTS.git
-cd InfiniTownTS
-```
-
-### 2️⃣ Install dependencies
+## Run Locally
 
 ```bash
 npm install
-```
-
-### 3️⃣ Start development server
-
-```bash
 npm run dev
 ```
 
-### 4️⃣ Build for production
+Open the local Vite URL in a browser.
+
+Useful query flags:
+
+```text
+?dev=1              enable dev UI/FPS counter
+?stream=0           disable stream-mode default behavior
+?overlay=0          hide overlay
+?camera=0           disable auto camera director
+?atmosphere=0       disable day/night atmosphere updates
+?dayLength=300      set one city day to 300 real seconds for testing
+?city=AICITY%20Live set overlay city name
+```
+
+## Build
 
 ```bash
 npm run build
 ```
 
-The production-ready files will be located in the dist/ directory and can be deployed to any static server or GitHub Pages.
+## OBS / YouTube Direction
 
----
+For the first public version:
 
-## 🧭 Project Structure
-
-```
-InfiniTownTS/
-├── docs/             # Static files for GitHub Pages
-├── dist/             # Build output
-├── src/              # TypeScript source code
-│   ├── core/         # Core logic for infinite city generation
-│   └── main.ts       # Entry point
-├── public/           # Static assets
-├── package.json
-└── README.md
+```text
+Browser running AICITY → OBS capture → YouTube Live RTMP
 ```
 
----
+Recommended first test:
 
-## 🛠️ Tech Stack
+- 720p30 or 1080p30.
+- Browser full-screen or OBS browser/window capture.
+- Use `?dayLength=300` for testing day/night quickly.
+- Use normal latency, not ultra-low latency, for stream stability.
 
-- [Three.js](https://threejs.org/)：WebGL rendering engine
-- [TypeScript](https://www.typescriptlang.org/)：A statically typed superset of JavaScript
-- [TWEEN.js](https://github.com/tweenjs/tween.js)：Tweening animation library
+## Important License Note
 
----
+This repository currently uses InfiniTownTS as the rendering foundation and includes its assets/code base. Before monetizing the YouTube channel, confirm commercial/monetized usage rights for InfiniTownTS and its derivative relationship to the original InfiniTown demo/assets.
 
-## 📌 Key Features
+## CTO Direction
 
-- ✨ Infinite city algorithm with dynamic loading and unloading of city blocks
-- 🧭 Camera orbit and focus control using OrbitControls
-- 🔧 TypeScript class-based architecture to help you better understand how InfiniTown works
+Short-term:
 
+1. Make the city beautiful and watchable.
+2. Make it persistent and recognizable.
+3. Launch 24/7 via local OBS.
+4. Add chat voting and naming.
+5. Grow toward a deeper living simulation after the stream is running.
 
-## 💬 CallMe
+Long-term moat:
 
-- 📮 Email：osoker008@gmail.com
+- Cinematic camera director.
+- Persistent city identity.
+- Viewer-shaped city growth.
+- AI news ticker from real city events.

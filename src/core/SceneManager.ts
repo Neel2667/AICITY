@@ -13,6 +13,10 @@ import { EventMgr } from '../utils/EventMgr';
 import { LightProbeLoader } from '../loader/LightProbeLoader';
 import { EXRLoader, OrbitControls } from 'three/examples/jsm/Addons.js';
 import { MobileCar } from '../objects/MobileCar';
+import type { CityClockSnapshot } from '../stream/CityClock';
+import type { WeatherSnapshot } from '../weather/WeatherState';
+import { streamConfig } from '../stream/StreamConfig';
+import { CameraDirector } from '../camera/CameraDirector';
 //import TWEEN from 'three/examples/jsm/libs/tween.module.js'
 
 export class SceneManager {
@@ -38,6 +42,8 @@ export class SceneManager {
     //! Environment Llighting:
     protected envLightProbe: LightProbeLoader = LightProbeLoader.getins();
     protected dirLight: THREE.DirectionalLight | null = null;
+    protected ambientLight: THREE.AmbientLight | null = null;
+    protected cameraDirector: CameraDirector | null = null;
 
     protected resizeHandler: any = null;
 
@@ -77,14 +83,15 @@ export class SceneManager {
         }
 
         // 创建渲染器
+        this.cameraDirector = streamConfig.cameraDirectorEnabled ? new CameraDirector(this.cameraController) : null;
         this.renderer = new Renderer(container);
         this.renderer.setSaturation(1.15);
         this.renderer.renderer.setClearColor(GVar.FOG_COLOR);
 
 
         // 添加环境光
-        const ambientLight = new THREE.AmbientLight(0xcccccc, 0.8);
-        this.scene.add(ambientLight);
+        this.ambientLight = new THREE.AmbientLight(0xcccccc, 0.8);
+        this.scene.add(this.ambientLight);
 
         // 添加坐标轴
         //const axesHelper = new THREE.AxesHelper(5);
@@ -315,6 +322,64 @@ export class SceneManager {
         });
     }
 
+
+    protected updateAtmosphere(clock: CityClockSnapshot, weather: WeatherSnapshot): void {
+        const baseColor = this.getSkyColor(clock.timeOfDay);
+        const fogColor = baseColor.clone().lerp(new THREE.Color(0xdce7ef), weather.fogBoost);
+        const daylight = this.getDaylight(clock.timeOfDay) * weather.lightMultiplier;
+        const twilight = this.getTwilight(clock.timeOfDay);
+
+        this.scene.background = baseColor;
+        if (this.scene.fog instanceof THREE.Fog) {
+            this.scene.fog.color.copy(fogColor);
+            this.scene.fog.near = 170 - weather.fogBoost * 55;
+            this.scene.fog.far = 320 - weather.fogBoost * 60;
+        }
+        this.renderer.renderer.setClearColor(baseColor);
+
+        if (this.ambientLight) {
+            this.ambientLight.intensity = 0.22 + daylight * 0.68 + twilight * 0.18;
+            this.ambientLight.color.copy(new THREE.Color(0xbfd5ff).lerp(new THREE.Color(0xffe0b0), twilight));
+        }
+
+        if (this.dirLight) {
+            const sunOrbit = (clock.timeOfDay - 0.25) * Math.PI * 2;
+            const sunHeight = Math.max(0.08, Math.sin(sunOrbit));
+            this.dirLight.position.set(
+                Math.cos(sunOrbit) * 130,
+                35 + sunHeight * 145,
+                Math.sin(sunOrbit) * 130,
+            );
+            this.dirLight.intensity = 0.18 + daylight * 1.12 + twilight * 0.35;
+            this.dirLight.color.copy(new THREE.Color(0x9fb8ff).lerp(new THREE.Color(0xffddaa), Math.max(twilight, daylight * 0.45)));
+        }
+    }
+
+    protected getDaylight(timeOfDay: number): number {
+        return Math.max(0, Math.sin((timeOfDay - 0.25) * Math.PI * 2));
+    }
+
+    protected getTwilight(timeOfDay: number): number {
+        const dawn = 1 - Math.min(1, Math.abs(timeOfDay - 0.255) / 0.07);
+        const dusk = 1 - Math.min(1, Math.abs(timeOfDay - 0.755) / 0.08);
+        return Math.max(0, dawn, dusk);
+    }
+
+    protected getSkyColor(timeOfDay: number): THREE.Color {
+        const night = new THREE.Color(0x0b1026);
+        const dawn = new THREE.Color(0xffa35c);
+        const day = new THREE.Color(GVar.FOG_COLOR);
+        const dusk = new THREE.Color(0xff8d6b);
+
+        if (timeOfDay < 0.22) return night;
+        if (timeOfDay < 0.30) return night.clone().lerp(dawn, (timeOfDay - 0.22) / 0.08);
+        if (timeOfDay < 0.40) return dawn.clone().lerp(day, (timeOfDay - 0.30) / 0.10);
+        if (timeOfDay < 0.68) return day;
+        if (timeOfDay < 0.78) return day.clone().lerp(dusk, (timeOfDay - 0.68) / 0.10);
+        if (timeOfDay < 0.86) return dusk.clone().lerp(night, (timeOfDay - 0.78) / 0.08);
+        return night;
+    }
+
     /**
      * 从碰撞Mesh获取对应的ChunkInstances.
      * @param x 
@@ -354,7 +419,7 @@ export class SceneManager {
         this.followMobile = null;
     }
 
-    public update(): void {
+    public update(clockSnapshot?: CityClockSnapshot, weatherSnapshot?: WeatherSnapshot): void {
         const delta: number = this.clock.getDelta();
         const elapsed: number = this.clock.getElapsedTime();
 
@@ -364,8 +429,16 @@ export class SceneManager {
             obj.update(delta);
         });
 
+        if (streamConfig.atmosphereEnabled && clockSnapshot && weatherSnapshot) {
+            this.updateAtmosphere(clockSnapshot, weatherSnapshot);
+        }
+
         // 更新相机跟限：
         this.updateFollow();
+
+        if (!this.followMobile) {
+            this.cameraDirector?.update({ delta: delta, elapsed: elapsed }, clockSnapshot);
+        }
 
         // 更新相机控制器
         this.cameraController.update();

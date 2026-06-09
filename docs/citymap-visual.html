@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Harbor’s End — CityMap Visual (Proposed Schema)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Playfair+Display:wght@700&amp;display=swap');
+        
+        body {
+            font-family: 'Inter', system_ui, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            margin: 0;
+            padding: 40px 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 2.8rem;
+            margin-bottom: 8px;
+            color: #f1e7d2;
+        }
+        
+        .subtitle {
+            color: #94a3b8;
+            font-size: 1.1rem;
+            margin-bottom: 40px;
+        }
+        
+        .map-container {
+            background: #1e2937;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.4);
+            border: 1px solid #334155;
+        }
+        
+        .map-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .chunk {
+            aspect-ratio: 1;
+            background: #334155;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 8px;
+            font-size: 0.75rem;
+            position: relative;
+            transition: transform 0.2s ease;
+            border: 2px solid #475569;
+        }
+        
+        .chunk:hover {
+            transform: scale(1.05);
+            z-index: 10;
+        }
+        
+        .chunk .name {
+            font-weight: 600;
+            font-size: 0.7rem;
+            line-height: 1.1;
+            margin-bottom: 4px;
+        }
+        
+        .chunk .district {
+            font-size: 0.6rem;
+            opacity: 0.7;
+        }
+        
+        .chunk .status {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            font-size: 0.55rem;
+            padding: 1px 6px;
+            border-radius: 9999px;
+            font-weight: 500;
+        }
+        
+        .status-complete {
+            background: #166534;
+            color: #86efac;
+        }
+        
+        .district-downtown { background: #1e40af; border-color: #3b82f6; }
+        .district-waterfront { background: #0e7490; border-color: #22d3ee; }
+        .district-residential { background: #166534; border-color: #4ade80; }
+        
+        .legend {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .legend-color {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+        }
+        
+        .info-panel {
+            background: #1e2937;
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 40px;
+            border: 1px solid #334155;
+        }
+        
+        .json-preview {
+            background: #0f172a;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: ui-monospace, monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            white-space: pre;
+            border: 1px solid #334155;
+        }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>Harbor’s End</h1>
+                <p class="subtitle">Proposed CityMap Schema — Visual Preview</p>
+            </div>
+            <div style="text-align: right; font-size: 0.9rem; color: #64748b;">
+                <div><strong>Version:</strong> 1</div>
+                <div><strong>Day:</strong> 1</div>
+            </div>
+        </div>
+
+        <!-- Visual Map -->
+        <div class="map-container">
+            <h3 style="margin-top:0; margin-bottom:20px; text-align:center; color:#cbd5e1;">City Grid (5×5 View)</h3>
+            
+            <div class="map-grid">
+                <!-- Row 1 -->
+                <div class="chunk district-waterfront">
+                    <div class="name">Old Lighthouse</div>
+                    <div class="district">Waterfront</div>
+                    <div class="status status-complete">Complete</div>
+                </div>
+                <div class="chunk district-waterfront">
+                    <div class="name">Fisherman’s Wharf</div>
+                    <div class="district">Waterfront</div>
+                    <div class="status status-complete">Complete</div>
+                </div>
+                <div class="chunk district-downtown">
+                    <div class="name">Harbor Plaza</div>
+                    <div class="district">Downtown</div>
+                    <div class="status status-complete">Complete</div>
+                </div>
+                <div class="chunk district-downtown">
+                    <div class="name">The Anchor</div>
+                    <div class="district">Downtown</div>
+                    <div class="status status-complete">Complete</div>
+                </div>
+                <div class="chunk district-downtown">
+                    <div class="name">Market Hall</div>
+                    <div class="district">Downtown</div>
+                    <div class="status status-complete">Complete</div>
+                </div>
+
+                <!-- Row 2 -->
+                <div class="chunk district-waterfront">
+                    <div class="name">Pier 3</div>
+                    <div class="district">Waterfront</div>
+                    <div class="status status-complete">Complete</div>
+                </div>
+                <div class="chunk district-waterfront">
+                    <div class="name">Boat House</div>
+                    <div class="district">Waterfront</div>
+                    <div class="status status-complete">Complete</div>
+                </div>
+                <div class="chunk district-downtown">
+                    <div class="name">Town Hall</div>
+                    <div class="district">Downtown</div>
+                    <div class="status status-complete">Complete</div>
+                </div>
+                <div class="chunk district-downtown">
+                    <div class="name">Coffee &amp; Books</div>
+                    <div class="district">Downtown</div>
+                    <div class="status status-complete">Complete</div>
+                </div>
+                <div class="chunk district-residential">
+                    <div class="name">Maple Row</div>
+                    <div class="district">Residential</div>
+                    <div class="status status-complete">Complete</div>
+                </div>
+
+                <!-- Row 3 -->
+                <div class="chunk district-residential">
+                    <div class="name">Quiet Gardens</div>
+                    <div class="district">Residential</div>
+                    <div class="status status-complete">Complete</div>
+                </div>
+                <div class="chunk district-downtown">
+                    <div class="name">Station Square</div>
+                    <div class="district">Downtown</div>
+                    <div class="status status-complete">Complete</div>
+                </div>
+                <div class="chunk district-downtown">
+                    <div class="name">Central Bank</div>
+                    <div class="district">Downtown</div>
+                    <div class="status status-complete">Complete</div>
+                </div>
+                <div class="chunk district-residential">
+                    <div class="name">Oak Street Homes</div>
+                    <div class="district">Residential</div>
+                    <div class="status status-complete">Complete</div>
+                </div>
+                <div class="chunk district-residential">
+                    <div class="name">Hill View</div>
+                    <div class="district">Residential</div>
+                    <div class="status status-complete">Complete</div>
+                </div>
+            </div>
+
+            <!-- Legend -->
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background:#1e40af"></div>
+                    <span>Downtown (Harbor Square)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background:#0e7490"></div>
+                    <span>Waterfront (Lighthouse District)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background:#166534"></div>
+                    <span>Residential (Maple Hill)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Panel -->
+        <div class="info-panel">
+            <h3 style="margin-top:0;">How This Maps to the Schema</h3>
+            <p style="color:#94a3b8; margin-bottom:20px;">
+                This visual represents the initial beautiful city that will be loaded from the <code>CityMap</code> JSON.
+            </p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <strong>Districts</strong>
+                    <ul style="margin: 8px 0; padding-left: 20px; color:#cbd5e1;">
+                        <li>Harbor Square (Downtown)</li>
+                        <li>Lighthouse District (Waterfront)</li>
+                        <li>Maple Hill (Residential)</li>
+                    </ul>
+                </div>
+                <div>
+                    <strong>Key Features</strong>
+                    <ul style="margin: 8px 0; padding-left: 20px; color:#cbd5e1;">
+                        <li>Named buildings &amp; landmarks</li>
+                        <li>Construction status tracking</li>
+                        <li>District moods for atmosphere</li>
+                        <li>Ready for growth system</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 40px; text-align: center; color: #64748b; font-size: 0.85rem;">
+            This is a visual representation of the proposed CityMap schema.<br>
+            Ready for implementation in Phase 0.
+        </div>
+    </div>
+</body>
+</html>

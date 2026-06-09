@@ -10,6 +10,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { MobileCloud } from '../objects/MobileCloud';
 import type { IUpdate } from '../interfaces/IUpdate';
 import {MobileCar} from '../objects/MobileCar';
+import { CityMapLoader, type CityChunkData } from '../loader/CityMapLoader';
 
 // 定义城市块数据结构
 export interface ChunkData {

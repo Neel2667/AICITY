@@ -98,4 +98,4 @@ Key requirements:
 
 ---
 
-**Status:** Ready to begin Phase 0 implementation.
+**Status:** Phase 0 in progress — CityMap JSON and CityMapLoader created. Integration with CityChunkTbl started.

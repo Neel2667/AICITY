@@ -1,167 +1,94 @@
 /**
  * CityBuilder.ts
  * ----------------------------------------------------------------------------
- * Builds the entire FINITE city ONCE as static geometry from the authored
- * CityDesign map — but using the ORIGINAL InfiniTown textured assets so it
- * looks as good as the original engine.
+ * Builds the FINITE authored city ONCE from real CC0 Kenney City Kit models
+ * (loaded via ModelLibrary), placed deterministically on the CityDesign grid.
  *
- * Each urban tile is assembled with the same recipe the original used:
- *   textured block  +  4 textured road lanes (merged)  +  textured intersection
- * placed deterministically (no randomness, no infinite wrap).
- *
- * Natural/landmark tiles (ocean, beach, fields, airport, station, market…) use
- * LandmarkFactory geometry, sitting on the same textured road grid so they
- * blend into the city instead of floating on flat colored squares.
+ * Every tile is a flat ground plate + a real glTF model on top:
+ *   road tiles      → Kenney road pieces (straight / intersection)
+ *   downtown/midtown→ Kenney commercial buildings + skyscrapers
+ *   residential/vil → Kenney suburban houses (+ trees/fences)
+ *   industrial      → Kenney industrial buildings + chimneys
+ *   park            → grass + suburban trees
+ *   natural/landmark→ LandmarkFactory (ocean, beach, fields, airport, station,
+ *                     market, plaza, promenade) — bespoke low-poly geometry.
  */
 import * as THREE from 'three';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { TILES, GRID_W, GRID_H, TILE, tileToWorld, type TileKind } from './CityDesign';
+import { TILES, GRID_W, GRID_H, TILE, tileToWorld, isRoad, type TileKind } from './CityDesign';
 import { buildLandmarkTile } from './LandmarkFactory';
-import { GVar } from '../utils/GVar';
+import { modelLibrary, type ModelGroup } from './ModelLibrary';
 
-// Urban tile kind → acceptable baked block names (first match wins, deterministic).
-const URBAN_BLOCKS: Record<string, string[]> = {
-  downtown:    ['block_1_merged', 'block_2_merged', 'block_3_merged'],
-  midtown:     ['block_7_merged', 'block_9_merged', 'block_3_merged'],
-  residential: ['block_4_merged', 'block_5_merged', 'block_6_merged'],
-  village:     ['block_4_merged', 'block_6_merged', 'block_5_merged'],
-  industrial:  ['block_11_merged', 'block_10_merged'],
-  park:        ['park_2_merged', 'park_3_merged'],
+// Ground colours per kind (a clean plate under each model).
+const GROUND: Partial<Record<TileKind, number>> = {
+  downtown: 0x8d9aa5, midtown: 0x95a0a8, residential: 0x9ccc65, village: 0x9ccc65,
+  industrial: 0x9aa0a3, park: 0x7cb342, road: 0x6b7178,
 };
 
-// Kinds that should be built as a full textured "city block" tile.
-const URBAN_KINDS = new Set<TileKind>(['downtown', 'midtown', 'residential', 'village', 'industrial', 'park']);
-
 export class CityBuilder {
-  private blockPool = new Map<string, THREE.Object3D[]>();
-  private lanes: THREE.Object3D[] = [];
-  private intersections: THREE.Object3D[] = [];
   public readonly root = new THREE.Group();
 
   constructor() {
     this.root.name = 'authoredCity';
   }
 
-  /** Ingest the baked prototypes once after asset load. */
-  public ingest(arrBlocks: any[], arrLanes: any[] = [], arrIntersections: any[] = []): void {
-    this.blockPool.clear();
-    for (const b of arrBlocks) {
-      const n: string = (b.name as string) || '';
-      if (!this.blockPool.has(n)) this.blockPool.set(n, []);
-      this.blockPool.get(n)!.push(b);
-    }
-    // expand lanes like the original (more 01s than 03s for variety)
-    this.lanes = [];
-    for (const t of arrLanes) {
-      const reps = (t.name === 'Road_Lane_03_fixed') ? 5 : 10;
-      for (let i = 0; i < reps; i++) this.lanes.push(t);
-    }
-    if (this.lanes.length === 0) this.lanes = arrLanes.slice();
-    this.intersections = arrIntersections.slice();
+  /** Ensure models are loaded. */
+  public async preload(): Promise<void> {
+    if (!modelLibrary.loaded) await modelLibrary.preload();
   }
 
-  // deterministic pick from an array based on tile coords
-  private pick<T>(arr: T[], x: number, y: number, salt = 0): T | null {
-    if (!arr.length) return null;
-    const h = Math.abs(Math.floor(Math.sin(x * 49.3 + y * 97.1 + salt * 13.1) * 10000));
-    return arr[h % arr.length];
+  // deterministic index from tile coords
+  private idx(x: number, y: number, salt = 0): number {
+    return Math.abs(Math.floor(Math.sin(x * 49.3 + y * 97.1 + salt * 13.7) * 10000));
   }
 
-  private resolveBaked(kind: string, x: number, y: number): THREE.Object3D | null {
-    const wants = URBAN_BLOCKS[kind] ?? [];
-    for (let off = 0; off < Math.max(1, wants.length); off++) {
-      const want = wants.length ? wants[(this.idx(x, y) + off) % wants.length] : '';
-      for (const [name, arr] of this.blockPool.entries()) {
-        if (arr.length && (want === '' || name.includes(want))) {
-          const c = arr[0].clone();
-          this.prepShadows(c);
-          return c;
-        }
-      }
-    }
-    return null;
+  private pickName(group: ModelGroup, x: number, y: number, salt = 0): string | null {
+    const names = modelLibrary.names(group);
+    if (!names.length) return null;
+    return names[this.idx(x, y, salt) % names.length];
   }
 
-  private idx(x: number, y: number): number {
-    return Math.abs(Math.floor(Math.sin(x * 49.3 + y * 97.1) * 10000));
+  private groundPlate(kind: TileKind): THREE.Mesh {
+    const color = GROUND[kind] ?? 0x9ccc65;
+    const m = new THREE.Mesh(
+      new THREE.PlaneGeometry(TILE, TILE),
+      new THREE.MeshStandardMaterial({ color, roughness: 1 }),
+    );
+    m.rotation.x = -Math.PI / 2;
+    m.position.y = -0.02;
+    m.receiveShadow = true;
+    return m;
   }
 
-  private prepShadows(obj: THREE.Object3D): void {
-    obj.traverse((o: any) => {
-      if (o instanceof THREE.Mesh) {
-        o.castShadow = true;
-        o.receiveShadow = true;
-        if (o.material && o.material.defines) {
-          o.material.defines.USE_FOG = true;
-          o.material.defines.USE_SHADOWMAP = true;
-          o.material.defines[GVar.SHADOWMAP_TYPE] = true;
-        }
-      }
-    });
-  }
+  /** Pick a road piece + rotation that matches neighbouring roads. */
+  private roadPiece(x: number, y: number): THREE.Object3D | null {
+    const n = isRoad(x, y - 1), s = isRoad(x, y + 1);
+    const e = isRoad(x + 1, y), w = isRoad(x - 1, y);
+    const count = (n ? 1 : 0) + (s ? 1 : 0) + (e ? 1 : 0) + (w ? 1 : 0);
 
-  /**
-   * Build the textured road frame (4 lanes merged + intersection) exactly like
-   * the original _genRandomChunk did, so the streets look identical to before.
-   */
-  private buildRoadFrame(x: number, y: number): THREE.Object3D {
-    const group = new THREE.Object3D();
-    if (!this.lanes.length) return group;
-
-    const matrix = new THREE.Matrix4();
-    const rot90 = new THREE.Matrix4().makeRotationY(Math.PI / 2);
-    const d: THREE.Mesh[] = [];
-
-    const result = (this.pick(this.lanes, x, y, 1) as any).clone() as THREE.Mesh;
-    result.position.set(-30, 0, 10);
-    result.geometry = result.geometry.clone();
-    group.add(result);
-    d.push(result);
-
-    const object = (this.pick(this.lanes, x, y, 2) as any).clone() as THREE.Mesh;
-    object.position.set(-30, 0, -10);
-    object.geometry = object.geometry.clone();
-    matrix.makeTranslation(0, 0, -20);
-    object.geometry.applyMatrix4(matrix);
-    d.push(object);
-
-    const mesh = (this.pick(this.lanes, x, y, 3) as any).clone() as THREE.Mesh;
-    mesh.position.set(-10, 0, -30);
-    mesh.rotation.y = Math.PI / 2;
-    mesh.geometry = mesh.geometry.clone();
-    matrix.makeTranslation(20, 0, -40);
-    mesh.geometry.applyMatrix4(rot90);
-    mesh.geometry.applyMatrix4(matrix);
-    d.push(mesh);
-
-    const o = (this.pick(this.lanes, x, y, 4) as any).clone() as THREE.Mesh;
-    o.position.set(10, 0, -30);
-    o.rotation.y = Math.PI / 2;
-    o.geometry = o.geometry.clone();
-    matrix.makeTranslation(40, 0, -40);
-    o.geometry.applyMatrix4(rot90);
-    o.geometry.applyMatrix4(matrix);
-    d.push(o);
-
-    try {
-      const merged = mergeGeometries(d.map(m => m.geometry), true);
-      if (merged) {
-        result.geometry = merged;
-        d.forEach(m => { if (m !== result) group.remove(m); });
-      }
-    } catch { /* keep separate lanes on failure */ }
-
-    if (this.intersections.length) {
-      const r = (this.pick(this.intersections, x, y, 5) as any).clone() as THREE.Object3D;
-      r.position.set(-30, 0, 30);
-      group.add(r);
+    let name = 'road-straight';
+    let rotY = 0; // straight runs along Z by default; rotate to run along X
+    if (count >= 3) {
+      name = 'road-intersection';
+    } else if (count === 2 && ((n && s) || (e && w))) {
+      name = 'road-straight';
+      rotY = (e && w) ? Math.PI / 2 : 0;
+    } else if (count === 2) {
+      name = 'road-curve';
+      // orient curve toward the two open sides
+      if (s && e) rotY = 0;
+      else if (s && w) rotY = Math.PI / 2;
+      else if (n && w) rotY = Math.PI;
+      else rotY = -Math.PI / 2;
+    } else {
+      name = 'road-straight';
+      rotY = (e || w) ? Math.PI / 2 : 0;
     }
 
-    this.prepShadows(group);
-    return group;
+    const obj = modelLibrary.get('roads', name) ?? modelLibrary.get('roads', 'road-straight');
+    if (obj) obj.rotation.y = rotY;
+    return obj;
   }
 
-  /** Build the whole city. Call once after ingest(). */
   public build(): THREE.Group {
     while (this.root.children.length) this.root.remove(this.root.children[0]);
 
@@ -170,14 +97,9 @@ export class CityBuilder {
         const tile = TILES[y][x];
         const node = this.buildTile(tile.kind, x, y);
         if (!node) continue;
-
         const { x: wx, z: wz } = tileToWorld(x, y);
         node.position.set(wx, 0, wz);
-        if (tile.rot) node.rotation.y = tile.rot * (Math.PI / 2);
-
-        (node as any).tileX = x;
-        (node as any).tileY = y;
-        (node as any).zoneId = tile.zoneId;
+        (node as any).tileX = x; (node as any).tileY = y; (node as any).zoneId = tile.zoneId;
         node.name = node.name || `tile_${x}_${y}`;
         this.root.add(node);
       }
@@ -186,25 +108,55 @@ export class CityBuilder {
   }
 
   private buildTile(kind: TileKind, x: number, y: number): THREE.Object3D | null {
-    // Full textured city block (block + textured roads + intersection)
-    if (URBAN_KINDS.has(kind)) {
-      const g = new THREE.Group();
-      const block = this.resolveBaked(kind, x, y);
-      if (block) { block.position.set(0, 0, 0); g.add(block); }
-      g.add(this.buildRoadFrame(x, y));
-      return g;
-    }
+    // Bespoke natural / landmark tiles use LandmarkFactory geometry.
+    const bespoke = buildLandmarkTile(kind, x, y);
+    const bespokeKinds: TileKind[] = [
+      'ocean','beachSand','field','forest','airportRunway','airportTerminal',
+      'trainTracks','trainStation','marketSquare','townPlaza','promenade',
+    ];
+    if (bespokeKinds.includes(kind) && bespoke) return bespoke;
 
-    // Pure road tile → textured road frame only (no flat planes)
+    const g = new THREE.Group();
+    g.add(this.groundPlate(kind));
+
     if (kind === 'road') {
-      const g = new THREE.Group();
-      g.add(this.buildRoadFrame(x, y));
+      const r = this.roadPiece(x, y);
+      if (r) g.add(r);
       return g;
     }
 
-    // Natural / landmark tiles → procedural geometry from LandmarkFactory.
-    // (ocean/beach/fields have no textured assets in the original bake.)
-    return buildLandmarkTile(kind, x, y);
+    // Building tiles: place a glTF model centred on the tile.
+    let group: ModelGroup | null = null;
+    if (kind === 'downtown' || kind === 'midtown') group = 'commercial';
+    else if (kind === 'residential' || kind === 'village') group = 'suburban';
+    else if (kind === 'industrial') group = 'industrial';
+    else if (kind === 'park') group = 'suburban'; // trees
+
+    if (group) {
+      if (kind === 'park') {
+        // a couple of trees rather than a building
+        for (let i = 0; i < 3; i++) {
+          const t = modelLibrary.get('suburban', i % 2 ? 'tree-large' : 'tree-small');
+          if (t) {
+            t.position.set((this.idx(x, y, i) % 30) - 15, 0, (this.idx(x, y, i + 7) % 30) - 15);
+            t.rotation.y = (this.idx(x, y, i + 3) % 360) * Math.PI / 180;
+            g.add(t);
+          }
+        }
+      } else {
+        const name = (kind === 'downtown' && this.idx(x, y, 9) % 2 === 0)
+          ? (this.pickName('commercial', x, y, 5)?.startsWith('building-skyscraper')
+              ? this.pickName('commercial', x, y, 5)!
+              : `building-skyscraper-${'abcde'[this.idx(x, y, 2) % 5]}`)
+          : this.pickName(group, x, y);
+        const model = name ? modelLibrary.get(group, name) : null;
+        if (model) {
+          model.rotation.y = (this.idx(x, y, 4) % 4) * (Math.PI / 2);
+          g.add(model);
+        }
+      }
+    }
+    return g;
   }
 
   public extent() {

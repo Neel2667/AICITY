@@ -147,9 +147,12 @@ export class SceneManager {
                 if (this.useAuthoredCity) {
                     // ─── FINITE AUTHORED CITY (real, tourable place) ───────────────
                     this.cityBuilder = new CityBuilder();
-                    this.cityBuilder.ingest(arrBlocks, arrLanes, arrIntersections);
-                    const cityGroup = this.cityBuilder.build();
-                    this.scene.add(cityGroup);
+                    // Preload CC0 glTF models, then build the city from real assets.
+                    this.cityBuilder.preload().then(() => {
+                        const cityGroup = this.cityBuilder!.build();
+                        this.scene.add(cityGroup);
+                        console.log('[AICITY] Finite authored city built from CC0 models');
+                    });
                     this.scene.add(this.dirLight);
                     this.scene.add(this.dirLight.target);
 
@@ -161,7 +164,7 @@ export class SceneManager {
 
                     this.initKeyEvent();
                     this.bInited = true;
-                    console.log('[AICITY] Finite authored city built — tour camera active');
+                    console.log('[AICITY] Tour camera active; loading city models…');
                 } else {
                     // ─── LEGACY INFINITE PROCEDURAL ENGINE (fallback) ─────────────
                     this.cityChkTbl = new CityChunkTbl(arrBlocks, arrLanes, arrIntersections, arrCars, arrClouds);

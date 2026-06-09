@@ -48,9 +48,10 @@ export class CityClock {
   }
 
   private getPhase(timeOfDay: number): CityPhase {
-    if (timeOfDay >= 0.21 && timeOfDay < 0.30) return 'dawn';
-    if (timeOfDay >= 0.30 && timeOfDay < 0.70) return 'day';
-    if (timeOfDay >= 0.70 && timeOfDay < 0.81) return 'dusk';
+    // M3: Slightly adjusted phases for better visual transitions
+    if (timeOfDay >= 0.20 && timeOfDay < 0.32) return 'dawn';
+    if (timeOfDay >= 0.32 && timeOfDay < 0.68) return 'day';
+    if (timeOfDay >= 0.68 && timeOfDay < 0.82) return 'dusk';
     return 'night';
   }
 

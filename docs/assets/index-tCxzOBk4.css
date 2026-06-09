@@ -1,0 +1,1 @@
+*{margin:0;padding:0;box-sizing:border-box}body{overflow:hidden;font-family:Segoe UI,Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(135deg,#1a2a6c,#2c3e50);color:#fff;height:100vh}#app{width:100vw;height:100vh;position:relative}.status-bar{position:absolute;bottom:20px;left:20px;background:#00000080;padding:8px 16px;border-radius:4px;font-size:14px;z-index:100}

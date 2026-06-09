@@ -29,6 +29,9 @@ export class CityChunkTbl {
     private cloudObjects: any[]; // 云对象列表
     private carObjects: any[]; // 车辆对象列表
 
+    private mapLoader: CityMapLoader | null = null;
+    private cityMap: any = null;
+
     /**
      * 获取Chunks数据.
      */
@@ -68,6 +71,14 @@ export class CityChunkTbl {
         });
 
         this._generate();
+    }
+
+    public async loadPersistentMap(): Promise<void> {
+        if (!this.mapLoader) {
+            this.mapLoader = new CityMapLoader();
+        }
+        this.cityMap = await this.mapLoader.loadMap();
+        console.log('[CityChunkTbl] Persistent map loaded for Harbor’s End');
     }
 
     /**

@@ -98,4 +98,4 @@ Key requirements:
 
 ---
 
-**Status:** Phase 0 in progress — CityMap JSON and CityMapLoader created. Integration with CityChunkTbl started.
+**Status:** Phase 1 in progress — Persistent city map foundation implemented. City now loads from citymap.json instead of pure random generation. Stream-ready experience being finalized.

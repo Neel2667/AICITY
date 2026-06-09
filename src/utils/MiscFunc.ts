@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { GVar } from './GVar';
 /**
  * 杂项函数：
  */
@@ -14,8 +15,39 @@ export class MiscFunc {
         return Math.sqrt(-Math.log(threshold)) / d;
     }
 
+    // ─── Deterministic seeded PRNG ──────────────────────────────────────────────
+    // When GVar.RANDOM_SEED_ENABLED is true, random() becomes a stable, seeded
+    // stream so the SAME city is generated on every reload — the foundation of a
+    // persistent, recognizable place (instead of a different random city each time).
+    private static _seeded = false;
+    private static _state = 0;
+
+    private static _initSeed(): void {
+        // Hash the seed string into a 32-bit integer (xfnv1a-ish).
+        let h = 2166136261 >>> 0;
+        const s = GVar.RANDOM_SEED || 'aicity';
+        for (let i = 0; i < s.length; i++) {
+            h ^= s.charCodeAt(i);
+            h = Math.imul(h, 16777619) >>> 0;
+        }
+        MiscFunc._state = h || 1;
+        MiscFunc._seeded = true;
+    }
+
     public static random(): number {
-        return Math.random();
+        if (!GVar.RANDOM_SEED_ENABLED) return Math.random();
+        if (!MiscFunc._seeded) MiscFunc._initSeed();
+        // Mulberry32 — fast, good-quality, deterministic.
+        MiscFunc._state = (MiscFunc._state + 0x6D2B79F5) >>> 0;
+        let t = MiscFunc._state;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    }
+
+    /** Reset the seeded stream (so generation restarts from the same point). */
+    public static resetSeed(): void {
+        MiscFunc._seeded = false;
     }
 
     /**

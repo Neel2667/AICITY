@@ -50,8 +50,10 @@ export class GVar {
     //!　全局变量:
     public static FPS: boolean = false;
     public static LOG_CALLS: boolean = false;
-    public static RANDOM_SEED: string = "infinitown";
-    public static RANDOM_SEED_ENABLED: boolean = false;
+    // Seeded generation: the SAME city appears on every reload (a real, fixed place).
+    // Change RANDOM_SEED to get a different (but still stable) city layout.
+    public static RANDOM_SEED: string = "aicity-harbor";
+    public static RANDOM_SEED_ENABLED: boolean = true;
     public static MAX_PIXEL_RATIO: number = 1.25;
     public static SHADOWMAP_RESOLUTION: number = GVar.isMobile() ? 1024 : 2048;
     public static SHADOWMAP_TYPE: "SHADOWMAP_TYPE_PCF";

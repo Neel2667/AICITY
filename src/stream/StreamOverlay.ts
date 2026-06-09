@@ -12,9 +12,9 @@ export class StreamOverlay {
 
   private readonly tickerMessages = [
     'Camera Director: cinematic city patrol active',
-    'Phase 1: building the calm 24/7 stream foundation',
-    'Coming soon: named districts, construction, and viewer votes',
-    'AICITY remembers: this will become a persistent live city',
+    'Harbor’s End — A real city that never sleeps',
+    'Fixed persistent city active — no more random generation',
+    'Day/Night cycle running • Watch it grow over time',
   ];
 
   constructor(config: StreamConfig) {

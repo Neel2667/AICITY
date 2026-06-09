@@ -147,7 +147,7 @@ export class SceneManager {
                 if (this.useAuthoredCity) {
                     // ─── FINITE AUTHORED CITY (real, tourable place) ───────────────
                     this.cityBuilder = new CityBuilder();
-                    this.cityBuilder.ingest(arrBlocks);
+                    this.cityBuilder.ingest(arrBlocks, arrLanes, arrIntersections);
                     const cityGroup = this.cityBuilder.build();
                     this.scene.add(cityGroup);
                     this.scene.add(this.dirLight);

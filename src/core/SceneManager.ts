@@ -50,7 +50,7 @@ export class SceneManager {
     // ─── Finite authored city (F1–F4) ──────────────────────────────────────────
     // When true, render the fixed, hand-authored, bounded city + guided tour
     // camera instead of the legacy infinite procedural treadmill.
-    protected useAuthoredCity: boolean = true;
+    protected useAuthoredCity: boolean = false;
     protected cityRadius: number = 450;
     protected tourCamera: TourCamera | null = null;
 
@@ -368,8 +368,15 @@ export class SceneManager {
         if (this.scene.fog instanceof THREE.Fog) {
             this.scene.fog.color.copy(fogColor);
             // Fog scaled for the large city scene (keeps distant skyline visible).
-            this.scene.fog.near = 1400 - weather.fogBoost * 300;
-            this.scene.fog.far  = 4200 - weather.fogBoost * 600;
+            if (this.useAuthoredCity) {
+                // Large artist scene: keep distant skyline visible.
+                this.scene.fog.near = 1400 - weather.fogBoost * 300;
+                this.scene.fog.far  = 4200 - weather.fogBoost * 600;
+            } else {
+                // Original InfiniTown look: cozy close fog.
+                this.scene.fog.near = 170 - weather.fogBoost * 55;
+                this.scene.fog.far  = 320 - weather.fogBoost * 60;
+            }
         }
         this.renderer.renderer.setClearColor(baseColor);
 

@@ -19,7 +19,7 @@ export class StreamOverlay {
 
   constructor(config: StreamConfig) {
     this.root = document.createElement('div');
-    this.root.className = 'stream-overlay'; // M3: Stream overlay complete
+    this.root.className = 'stream-overlay'; // M3: Stream overlay finalized
 
     const brand = document.createElement('div');
     brand.className = 'stream-card stream-brand';

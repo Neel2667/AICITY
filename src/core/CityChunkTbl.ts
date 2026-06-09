@@ -10,7 +10,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { MobileCloud } from '../objects/MobileCloud';
 import type { IUpdate } from '../interfaces/IUpdate';
 import {MobileCar} from '../objects/MobileCar';
-import { CityMapLoader, type CityChunkData } from '../loader/CityMapLoader';
+import { CityMapLoader } from '../loader/CityMapLoader';
 
 // 定义城市块数据结构
 export interface ChunkData {
@@ -30,7 +30,8 @@ export class CityChunkTbl {
     private carObjects: any[]; // 车辆对象列表
 
     private mapLoader: CityMapLoader | null = null;
-    private cityMap: any = null;
+    private cityMap: any = null; // used for map-driven generation (Phase 1)
+    private isFixedCity: boolean = true; // Fixed bounded city mode
 
     /**
      * 获取Chunks数据.
@@ -88,6 +89,12 @@ export class CityChunkTbl {
      * @returns 城市块数据或 undefined
      */
     public getChunkData(x: number, y: number): ChunkData | null {
+        if (this.isFixedCity && this.cityMap) {
+            // Fixed city mode - only allow chunks defined in the map
+            const mapChunk = this.cityMap.chunks.find((c: any) => c.x === x && c.y === y);
+            if (!mapChunk) return null;
+        }
+        
         x = x % GVar.TABLE_SIZE;
         y = y % GVar.TABLE_SIZE;
         if (x < 0) x = GVar.TABLE_SIZE + x;

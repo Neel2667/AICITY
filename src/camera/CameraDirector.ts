@@ -30,7 +30,7 @@ export class CameraDirector {
     const radius = 165 + scenicBias * 38 + Math.sin(update.elapsed * 0.025) * 22;
     const height = 108 + scenicBias * 42 - nightBias * 22 + Math.sin(update.elapsed * 0.018) * 15;
 
-    this.orbitAngle += update.delta * (0.011 + scenicBias * 0.012); // M3: Even more cinematic
+    this.orbitAngle += update.delta * (0.010 + scenicBias * 0.013); // M3: Even more cinematic
 
     this.desiredTarget.set(
       Math.sin(update.elapsed * 0.010) * 10,

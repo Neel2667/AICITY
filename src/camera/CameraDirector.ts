@@ -25,10 +25,10 @@ export class CameraDirector {
     // Stream mode is a broadcast camera, not a user-controlled demo camera.
     controls.enabled = false;
 
-    const scenicBias = clock && (clock.phase === 'dawn' || clock.phase === 'dusk') ? 1 : 0;
+    const scenicBias = clock && (clock.phase === 'dawn' || clock.phase === 'dusk') ? 1.2 : 0;
     const nightBias = clock && clock.phase === 'night' ? 1 : 0;
-    const radius = 135 + scenicBias * 20 + Math.sin(update.elapsed * 0.025) * 8;
-    const height = 92 + scenicBias * 26 - nightBias * 8 + Math.sin(update.elapsed * 0.018) * 6;
+    const radius = 140 + scenicBias * 25 + Math.sin(update.elapsed * 0.025) * 10;
+    const height = 95 + scenicBias * 30 - nightBias * 10 + Math.sin(update.elapsed * 0.018) * 8;
 
     this.orbitAngle += update.delta * (0.018 + scenicBias * 0.006);
 

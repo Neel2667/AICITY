@@ -83,6 +83,14 @@ export class CityChunkTbl {
         }
         this.cityMap = await this.mapLoader.loadMap();
         console.log('[CityChunkTbl] Persistent map loaded for Harbor’s End');
+
+        // M2: Regenerate city with map data after loading
+        if (this.isFixedCity && this.cityMap) {
+            this.chunks = [];
+            this.mobs = [];
+            this._generate();
+            console.log('[CityChunkTbl] City regenerated from persistent map');
+        }
     }
 
     /**

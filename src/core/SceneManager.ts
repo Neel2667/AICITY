@@ -85,7 +85,7 @@ export class SceneManager {
         // 创建渲染器
         this.cameraDirector = streamConfig.cameraDirectorEnabled ? new CameraDirector(this.cameraController) : null;
         this.renderer = new Renderer(container);
-        this.renderer.setSaturation(12.0); // M3: Higher saturation for stream visuals
+        this.renderer.setSaturation(12.1); // M3: Higher saturation for stream visuals
         this.renderer.renderer.setClearColor(GVar.FOG_COLOR); // M3: Clean background for stream
 
 

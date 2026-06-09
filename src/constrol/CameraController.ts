@@ -29,10 +29,10 @@ export class CameraController {
 
         // 创建相机
         this.camera = new THREE.PerspectiveCamera(
-            30,
+            45,
             container.clientWidth / container.clientHeight,
-            10,
-            400
+            1,
+            6000
         );
         //this.camera.position.set(80, 140, 80); //initCamera
         this.camera.position.set(70, 120, 70); //initCamera
@@ -274,7 +274,7 @@ export class CameraController {
         c.minPolarAngle = 0.12;
         c.maxPolarAngle = 1.45;
         c.minDistance = 25;
-        c.maxDistance = 1200;
+        c.maxDistance = 3000;
         this.bPolarAdj = false;
         this.manualMode = true;
         this.bindKeys();

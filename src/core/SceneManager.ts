@@ -372,8 +372,9 @@ export class SceneManager {
         this.scene.background = baseColor;
         if (this.scene.fog instanceof THREE.Fog) {
             this.scene.fog.color.copy(fogColor);
-            this.scene.fog.near = 170 - weather.fogBoost * 55;
-            this.scene.fog.far = 320 - weather.fogBoost * 60;
+            // Fog scaled for the large city scene (keeps distant skyline visible).
+            this.scene.fog.near = 1400 - weather.fogBoost * 300;
+            this.scene.fog.far  = 4200 - weather.fogBoost * 600;
         }
         this.renderer.renderer.setClearColor(baseColor);
 

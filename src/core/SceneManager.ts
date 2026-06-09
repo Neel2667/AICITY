@@ -419,9 +419,22 @@ export class SceneManager {
         this.followMobile = null;
     }
 
-    public update(clockSnapshot?: CityClockSnapshot, weatherSnapshot?: WeatherSnapshot): void {
+    // ─── Phase 4 accessors ─────────────────────────────────────────────────────
+
+    private _lastUpdate: { delta: number; elapsed: number } | null = null;
+
+    public getLastUpdate(): { delta: number; elapsed: number } | null {
+        return this._lastUpdate;
+    }
+
+    public getCameraDirector() {
+        return this.cameraDirector;
+    }
+
+        public update(clockSnapshot?: CityClockSnapshot, weatherSnapshot?: WeatherSnapshot): void {
         const delta: number = this.clock.getDelta();
         const elapsed: number = this.clock.getElapsedTime();
+        this._lastUpdate = { delta, elapsed };
 
 
         // 更新所有对象

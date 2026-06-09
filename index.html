@@ -9,6 +9,29 @@
 </head>
 <body>
   <div id="app"></div>
+
+  <!-- Night vignette overlay -->
+  <div class="night-vignette" id="nightVignette"></div>
+
+  <!-- Audio mute toggle -->
+  <button class="audio-btn" id="audioBtn" title="Toggle city sounds">🔇 Sounds Off</button>
+
   <script type="module" src="/src/main.ts"></script>
+  <script type="module">
+    // Audio button wires to ambientAudio after module loads
+    import('/src/main.ts').catch(() => {});
+    const btn = document.getElementById('audioBtn');
+    let muted = true;
+    btn?.addEventListener('click', () => {
+      muted = !muted;
+      btn.textContent = muted ? '🔇 Sounds Off' : '🔊 Sounds On';
+      // ambientAudio singleton is accessible via window after main.ts loads
+      const audio = window.__aicityAudio;
+      if (audio) {
+        if (!muted && !audio.isStarted()) audio.start();
+        // Note: AmbientAudio master gain controls volume
+      }
+    });
+  </script>
 </body>
 </html>

@@ -1,88 +1,97 @@
 # AICITY Live
 
-AICITY Live is a 24/7 YouTube live-city project built on the Three.js/TypeScript foundation from InfiniTownTS.
-
-The product goal: a **persistent miniature city** that feels like a real place — named districts, recurring landmarks, cinematic camera direction, day/night/weather ambience, visible growth, and viewer-driven city decisions via YouTube chat.
+A **24/7 YouTube live-city simulation** built on Three.js + TypeScript. A persistent miniature city with named districts, cinematic camera direction, day/night cycle, weather, pedestrians, buses, fireworks, and live viewer chat interaction.
 
 ---
 
 ## Current Phase
 
-**Phase 3 — YouTube Chat Interaction** ✅
+**Phase 4 — Living City** ✅
 
-### Phase 3 adds (this update):
+### Phase 4 adds:
 
-- **`src/chat/ChatCommand.ts`** — Parser for all chat commands (`!vote`, `!name`, `!camera`, `!event`, `!where`, `!mayor`)
-- **`src/chat/VoteManager.ts`** — Full poll lifecycle: open → tally → close → apply winner; cooldowns, unique votes per viewer
-- **`src/chat/ChatBot.ts`** — WebSocket client connecting to the chat server; per-command cooldowns; dev injection helper (`window.__aicityChat(...)`)
-- **`src/chat/ChatOverlay.ts`** — In-stream HUD: live tally bars with %, countdown timer, chat feed (last 5 lines), Super Chat highlight, event banners (district unlock, construction complete, mayor elected)
-- **`server/chatServer.ts`** — Node.js WebSocket relay: polls YouTube Live Chat API every ~3s, forwards messages to frontend, spam guard, moderation blocklist
-- **`server/SETUP.md`** — Full setup guide for YouTube API key + Live Chat ID
-- **Auto-poll timer** — A vote poll opens automatically every 10 minutes in stream mode
-- **Mayor raffle** — Every 30 minutes a random `!mayor` entrant is elected
+- **`src/pedestrians/Pedestrian.ts`** — Capsule-mesh pedestrians with sidewalk waypoint navigation, mood types (worker/shopper/jogger/commuter), head-bob animation, activity scaling by time of day
+- **`src/pedestrians/PedestrianManager.ts`** — Spawns pedestrians across all 81 authored chunks; district mood drives pedestrian type mix; night → near-empty streets
+- **`src/bus/BusRoute.ts`** — 3 fixed bus routes: Harbor Express, West Connector, Greenway Loop; named stops in world space
+- **`src/bus/CityBus.ts`** — Coloured bus mesh with destination label sprite; smooth waypoint navigation; dwell timer at stops; fires `busArrived` events
+- **`src/bus/BusManager.ts`** — Spawns all buses staggered on routes; night service (60% speed); exposes `getRandomBus()` for camera follow
+- **`src/effects/Fireworks.ts`** — GPU particle bursts via THREE.Points + additive blending; multi-burst shows triggered by Super Chat, district unlocks, and construction completions
+- **`src/audio/AmbientAudio.ts`** — Fully synthesised city soundscape (Web Audio API, no external files): city hum, traffic layer, birdsong (dawn), rain layer, night crickets; all fade smoothly with time of day
+- **`src/camera/CameraDirector.ts`** — Full 5-mode cinematic director: `orbit`, `follow`, `district`, `event`, `fireworks`; auto-rotates scenes every 45s; responds to chat votes and city events
+- **Updated `StreamOverlay.ts`** — Bus arrival tickers, fireworks announcements, mayor news, enhanced dynamic ticker pool
+- **Updated `index.html`** — Audio mute button, night vignette
 
-### Phase 2 (shipped):
-- Persistent city map: 6 named districts, 81 chunks, 10 landmarks, 6 recurring daily events
-- CityState runtime: population growth, construction timers, district unlocks
-
-### Phase 1 (shipped):
-- Three.js + TypeScript + Vite · CityClock · Day/night atmosphere · CameraDirector · WeatherState · StreamOverlay
-
----
-
-## City Districts
-
-| District | Mood | Unlocks |
-|---|---|---|
-| **Downtown Core** | Busy | Day 1 |
-| **Maple Quarter** | Residential | Day 1 |
-| **Harbor District** | Commercial | Day 1 |
-| **Midtown** | Commercial | Day 1 |
-| **Ironworks** | Industrial | Day 3 |
-| **Greenway** | Park | Day 6 |
+### Phase 3 (shipped): YouTube chat bot — `!vote`, `!name`, `!camera`, `!event`, `!where`, `!mayor`
+### Phase 2 (shipped): Persistent city — 6 districts, 10 landmarks, CityState, CityEventBus
+### Phase 1 (shipped): Stream MVP — CityClock, CameraDirector, day/night atmosphere, WeatherState
 
 ---
 
-## Chat Commands
+## City Overview
 
-| Command | What it does | Cooldown |
+### Districts
+
+| District | Mood | Unlocks | Pedestrians |
+|---|---|---|---|
+| **Downtown Core** | Busy | Day 1 | Commuters, workers |
+| **Maple Quarter** | Residential | Day 1 | Shoppers, joggers |
+| **Harbor District** | Commercial | Day 1 | Shoppers, commuters |
+| **Midtown** | Commercial | Day 1 | Mix |
+| **Ironworks** | Industrial | Day 3 | Workers |
+| **Greenway** | Park | Day 6 | Joggers, shoppers |
+
+### Bus Routes
+
+| Route | Name | Colour | Key Stops |
+|---|---|---|---|
+| A | Harbor Express | Blue | Arena Square → Midtown → Harbor Market → Anchor Cafe |
+| B | West Connector | Green | Maple Park → Midtown West → Ironworks Gate |
+| C | Greenway Loop | Yellow | City Green → Festival Plaza → Sunset Lawn → Southside Brew |
+
+### Camera Modes
+
+| Mode | Trigger | Description |
 |---|---|---|
-| `!vote park` / `apartments` / `factory` / `shops` / `stadium` | Vote in current poll | 1 per poll |
-| `!name <text>` | Submit a building/road name for moderation | 2 min |
-| `!camera orbit` / `follow` / `district` / `event` | Vote for camera mode | 30 sec |
-| `!event fireworks` | Trigger fireworks (Super Chat or mod only) | 5 min |
-| `!where` | Bot replies with city status | 15 sec |
-| `!mayor` | Enter the 30-min mayor raffle | 1 hr |
+| `orbit` | Auto (45s rotation) | Slow panoramic orbit, height varies with phase |
+| `district` | Auto / `!camera district` | Slow flyover of a named district |
+| `follow` | `!camera follow` | Tracks a city bus or car |
+| `event` | Auto / `!camera event` | Zooms to active landmark |
+| `fireworks` | Super Chat / milestone | Pulls back for full sky view |
+
+---
+
+## Audio Layers (Web Audio API, no files needed)
+
+| Layer | Active When |
+|---|---|
+| City hum (low-pass noise) | Always |
+| Traffic wash | Day / commute hours |
+| Birdsong | Dawn, early morning |
+| Rain | Weather = Light Rain |
+| Night crickets | Night phase |
+
+Click anywhere or press any key to unlock audio.
 
 ---
 
 ## Run Locally
 
-### Frontend
-
 ```bash
+# Frontend
 npm install
 npm run dev
-```
 
-### Chat Server (optional — needed for real YouTube chat)
-
-```bash
+# Chat server (optional — for real YouTube chat)
 cd server
 npm install
 YOUTUBE_API_KEY=AIza... LIVE_CHAT_ID=Cg0KC... npm run dev
 ```
 
-See [`server/SETUP.md`](server/SETUP.md) for full YouTube API setup.
-
-### Dev Chat Injection (no YouTube account needed)
-
+### Dev chat injection (no YouTube needed)
 ```js
-// Open browser console and run:
-window.__aicityChat('!vote park', 'Alice', 'ch-alice')
-window.__aicityChat('!vote stadium', 'Bob', 'ch-bob')
-window.__aicityChat('!name Sunset Tower', 'Carol', 'ch-carol')
-window.__aicityChat('!camera follow', 'Dave', 'ch-dave')
+window.__aicityChat('!vote park', 'Alice', 'ch-1')
+window.__aicityChat('!camera follow', 'Bob', 'ch-2')
+window.__aicityChat('!event fireworks', 'Mod', 'ch-mod')
 ```
 
 ---
@@ -90,13 +99,13 @@ window.__aicityChat('!camera follow', 'Dave', 'ch-dave')
 ## URL Flags
 
 ```
-?dev=1              enable dev UI/FPS counter + chat injection helper
-?stream=0           disable stream-mode (also disables chatBot.connect())
+?dev=1              dev UI + FPS counter + chat injection helper
+?stream=0           disable stream mode
 ?overlay=0          hide overlay
-?camera=0           disable auto CameraDirector
-?atmosphere=0       disable day/night updates
-?dayLength=300      set one city day to 300 real seconds (fast testing)
-?city=AICITY%20Live set overlay city name
+?camera=0           disable CameraDirector
+?atmosphere=0       disable day/night
+?dayLength=300      fast testing (300s per city day)
+?city=AICITY%20Live overlay city name
 ```
 
 ---
@@ -109,15 +118,14 @@ npm run build
 
 ---
 
-## OBS / YouTube Direction
+## OBS Setup
 
 ```
-Browser (AICITY + Chat Server) → OBS capture → YouTube Live RTMP
+Browser (full-screen AICITY) → OBS Window Capture → YouTube RTMP
 ```
 
-- 720p30 or 1080p30
-- Use `?dayLength=300` to test day/night quickly
-- Normal latency (not ultra-low) for stream stability
+- 1080p30 recommended
+- Enable audio capture on the browser source in OBS
 
 ---
 
@@ -125,11 +133,11 @@ Browser (AICITY + Chat Server) → OBS capture → YouTube Live RTMP
 
 | Phase | Status | Goal |
 |---|---|---|
-| **Phase 1** | ✅ Done | Stream MVP — CameraDirector, clock overlay, atmosphere |
-| **Phase 2** | ✅ Done | Persistent city — districts, landmarks, CityState, events |
-| **Phase 3** | ✅ Done | Chat bot — votes, names, camera, fireworks, mayor raffle |
-| **Phase 4** | 🔜 Next | Pedestrians, buses, ambient audio, deeper visual polish |
-| **Phase 5** | 🔜 Future | OAuth bot replies to YouTube chat, SQLite persistence, admin panel |
+| Phase 1 | ✅ Done | Stream MVP |
+| Phase 2 | ✅ Done | Persistent city map |
+| Phase 3 | ✅ Done | YouTube chat bot + vote system |
+| Phase 4 | ✅ Done | Pedestrians, buses, audio, fireworks, 5-mode camera |
+| Phase 5 | 🔜 Next | OAuth bot replies to YouTube chat, SQLite persistence, admin panel, traffic lights |
 
 ---
 
@@ -138,26 +146,26 @@ Browser (AICITY + Chat Server) → OBS capture → YouTube Live RTMP
 ```
 YouTube Live Chat API
         │
-        ▼
-server/chatServer.ts (Node.js + WebSocket)
-        │  ws://localhost:3717
-        ▼
-src/chat/ChatBot.ts ──► parseCommand() ──► VoteManager / CityEventBus
-                                                  │
-                                    CityState.tick() ──► CityEventBus
-                                                  │
-                              StreamOverlay + ChatOverlay (HUD)
-                                                  │
-                                         SceneManager (Three.js)
-                                                  │
-                                         CameraDirector
-                                         Atmosphere Controller
-                                                  │
-                                        OBS → YouTube RTMP
+server/chatServer.ts ──WS──► ChatBot → VoteManager → CityEventBus
+                                                           │
+CityClock → CityState.tick() ──────────────────────────────┤
+                                                           │
+CityMap (authored) ──► CityMapRenderer (chunk layout)      │
+                                                           ▼
+                                               SceneManager (Three.js)
+                                                ├── CameraDirector (5 modes)
+                                                ├── Atmosphere (day/night/fog)
+                                                ├── PedestrianManager
+                                                ├── BusManager (3 routes)
+                                                ├── FireworksController
+                                                ├── AmbientAudio (synthesised)
+                                                └── StreamOverlay + ChatOverlay
+                                                           │
+                                                  OBS → YouTube RTMP
 ```
 
 ---
 
-## Important License Note
+## License Note
 
-This repository uses InfiniTownTS as the rendering foundation. Before monetizing, confirm commercial usage rights for InfiniTownTS assets.
+Uses InfiniTownTS as rendering foundation. Confirm commercial usage rights before monetizing.

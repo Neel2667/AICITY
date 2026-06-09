@@ -235,3 +235,42 @@ canvas { display: block; }
   .chat-banner { top: 80px; padding: 10px 16px; }
   .chat-banner-text { font-size: 12px; }
 }
+
+
+/* ─── Audio mute button ──────────────────────────────────────────────────── */
+
+.audio-btn {
+  position: fixed;
+  bottom: 26px;
+  right: 24px;
+  z-index: 130;
+  pointer-events: all;
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 999px;
+  background: rgba(8,12,28,0.56);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.28);
+  padding: 9px 16px;
+  color: rgba(255,247,232,0.80);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+}
+.audio-btn:hover { background: rgba(20,30,60,0.75); }
+
+/* ─── Fireworks canvas layer ─────────────────────────────────────────────── */
+/* Fireworks render on top of the city via THREE.js — no extra layer needed */
+
+/* ─── Night mode overlay tint ────────────────────────────────────────────── */
+.night-vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 50%,
+    transparent 55%,
+    rgba(4, 6, 20, 0.38) 100%);
+  transition: opacity 2s ease;
+}

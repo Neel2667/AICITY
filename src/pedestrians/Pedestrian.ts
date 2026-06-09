@@ -49,20 +49,27 @@ export class Pedestrian extends THREE.Object3D {
   private readonly mood: PedestrianMood;
   private readonly mesh: THREE.Mesh;
   private readonly bobPhase: number;
+  // World-space centre this pedestrian wanders around (a real street tile).
+  private readonly homeX: number;
+  private readonly homeZ: number;
 
-  constructor(mood: PedestrianMood = 'commuter') {
+  constructor(mood: PedestrianMood = 'commuter', homeX = 0, homeZ = 0) {
     super();
     this.mood = mood;
     this.name = 'pedestrian';
+    this.homeX = homeX;
+    this.homeZ = homeZ;
 
-    // Random start on the sidewalk ring
+    // Random start on the sidewalk ring, offset to this pedestrian's home tile
     const startWp = MiscFunc.getRandElement(SHARED_WAYPOINTS);
     this.position.copy(startWp);
-    this.position.x += (MiscFunc.random() - 0.5) * 4;
-    this.position.z += (MiscFunc.random() - 0.5) * 4;
+    this.position.x += homeX + (MiscFunc.random() - 0.5) * 4;
+    this.position.z += homeZ + (MiscFunc.random() - 0.5) * 4;
     this.position.y = 0.65; // stand on ground
 
     this.target = MiscFunc.getRandElement(SHARED_WAYPOINTS).clone();
+    this.target.x += homeX;
+    this.target.z += homeZ;
     this.speed  = (mood === 'jogger') ? 4.5 : 1.2 + MiscFunc.random() * 0.8;
     this.bobPhase = MiscFunc.random() * Math.PI * 2;
 
@@ -87,11 +94,11 @@ export class Pedestrian extends THREE.Object3D {
     const dist = toTarget.length();
 
     if (dist < 0.6) {
-      // Reached waypoint — pause then pick next
+      // Reached waypoint — pause then pick next (relative to home tile)
       this.pauseTimer = (this.mood === 'jogger') ? 0.1 : 0.5 + MiscFunc.random() * 2.0;
       this.target.copy(MiscFunc.getRandElement(SHARED_WAYPOINTS));
-      this.target.x += (MiscFunc.random() - 0.5) * 4;
-      this.target.z += (MiscFunc.random() - 0.5) * 4;
+      this.target.x += this.homeX + (MiscFunc.random() - 0.5) * 4;
+      this.target.z += this.homeZ + (MiscFunc.random() - 0.5) * 4;
       return;
     }
 

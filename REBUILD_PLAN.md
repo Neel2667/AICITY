@@ -84,7 +84,7 @@ Airport → Village → Station → Downtown → Market → Park → Promenade �
 | **F2** | Authored renderer: `CityBuilder` builds tiles from `CityDesign` (baked blocks) | Downtown is always downtown | ✅ done |
 | **F3** | `LandmarkFactory`: procedural airport / beach / station / market / plaza / promenade | The 6 memorable places appear | ✅ done |
 | **F4a** | Guided **TourCamera**: Airport→Village→Station→Market→Park→Beach→Downtown→Industrial loop + "Now Touring" overlay badge | "Here's the airport" is finally true | ✅ done |
-| **F4b** | Re-point pedestrians / traffic lights / buses to the NEW map coordinates | City life aligns to real streets | 🔜 next |
+| **F4b** | Re-point pedestrians / traffic lights / buses to the NEW map coordinates | City life aligns to real streets | ✅ done |
 | **F5** | Polish: in-world signage, water shimmer, richer life, soak test | Hours-long watchable stream | ⏳ |
 
 ### F1–F4a implementation notes
@@ -98,12 +98,24 @@ Airport → Village → Station → Downtown → Market → Park → Promenade �
 - Overlay shows a live **"NOW TOURING"** badge that names the place the camera is visiting.
 - Bonus: fixed the 9 pre-existing `tsc` errors, so `npm run build` is green again.
 
-### Known follow-ups (F4b)
-- `PedestrianManager`, `TrafficLightManager`, and `BusManager` still spawn using the OLD
-  `CITY_MAP` chunk coordinates (9×9, centred differently). They won't crash, but their agents
-  cluster near the old origin instead of the new streets. Next step re-points them at
-  `CityDesign` tile world positions (roads, plazas, station).
+### F4b implementation notes (city life on the real streets)
+- `CityDesign.ts` gained a street-network API: `roadTiles()`, `walkableTiles()`,
+  `intersectionTiles()`, `isRoad()`, `tileToWorld()` → all systems share one map truth.
+- **Pedestrians** now spawn on real walkable tiles (roads, plazas, station, promenade) with
+  a per-tile "home" they wander around, and mood mixes per authored zone (joggers in the park,
+  shoppers in the market, commuters at the station/airport).
+- **Buses**: 3 routes rewritten to follow ACTUAL roads — Cross-Town Line (central avenue),
+  Airport Connector (airport spur + north ring), Seaside Loop (downtown spine → promenade →
+  beach). Routes use dense road waypoints (pass-through) + named timed stops; `CityBus` now
+  distinguishes drive-through waypoints from dwell stops. Verified every stop sits on a road.
+- **Traffic lights** now placed at REAL road intersections (`intersectionTiles()`), not the
+  old 9×9 chunk corners.
+
+### Known follow-ups (F5)
 - `gltf/` models remain unused; optionally swap select procedural landmarks for CC0 glTF later.
+- In-world signage labels, water shimmer, richer ambient life, and a long soak test.
+- The legacy `CITY_MAP` is still used by `CameraDirector` (now disabled) and `StreamOverlay`
+  tickers/events; harmless, but could be migrated to `CityDesign` for full consistency.
 
 ## 6. Non-negotiables
 

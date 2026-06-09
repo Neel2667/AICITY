@@ -75,22 +75,30 @@ export class CityBus extends THREE.Object3D {
       return;
     }
 
-    const target = this.currentStop().position;
+    const current = this.currentStop();
+    const target = current.position;
     const toTarget = target.clone().sub(this.position);
     toTarget.y = 0;
     const dist = toTarget.length();
 
     if (dist < 1.5) {
-      if (!this.arrived) {
+      // Is this a timed, named stop or just a road-following waypoint?
+      const isNamedStop = !!current.name && (current.dwell ?? 0) > 0;
+      if (isNamedStop && !this.arrived) {
         this.arrived = true;
-        this.dwellTimer = this.route.dwellSeconds;
-        const stop = this.currentStop();
+        this.dwellTimer = current.dwell ?? this.route.dwellSeconds;
         CityEventBus.emit('busArrived', {
           routeId: this.route.id,
           routeName: this.route.name,
-          stopName: stop.name,
-          districtId: stop.districtId,
+          stopName: current.name,
+          districtId: current.districtId,
         });
+        return;
+      }
+      if (!isNamedStop) {
+        // pass straight through: advance to next waypoint immediately
+        this.stopIndex = (this.stopIndex + 1) % this.route.stops.length;
+        this.arrived = false;
       }
       return;
     }

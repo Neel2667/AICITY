@@ -1,84 +1,101 @@
 /**
  * BusRoute.ts
- * Defines fixed bus routes between districts.
- * Each route is a looping sequence of world-space waypoints.
- * Buses follow their route at steady speed, stopping briefly at each stop.
+ * Bus routes that follow the REAL roads of the authored finite city.
  *
- * CHUNK_SIZE = 60, TABLE_SIZE = 9 → grid runs from 0 to 540 world units.
- * Chunk (cx, cy) centre in world space ≈ (cx*60 - 240, 0, cy*60 - 240)
- * (the scene recentres, but for route purposes we use relative chunk offsets)
+ * Each route is a dense sequence of waypoints laid along actual road tiles
+ * (from CityDesign), so buses visibly drive down streets instead of cutting
+ * across blocks. Only waypoints flagged with `dwell` are timed "stops" where
+ * the bus pauses and announces an arrival.
  */
 import * as THREE from 'three';
-
-const C = 60; // CHUNK_SIZE — keep in sync with GVar.CHUNK_SIZE
+import { tileToWorld } from '../city/CityDesign';
 
 export interface BusStop {
   name: string;
   position: THREE.Vector3;
   districtId: string;
+  /** seconds to dwell here; undefined / 0 = drive straight through */
+  dwell?: number;
 }
 
 export interface BusRoute {
   id: string;
   name: string;
-  color: number;        // bus body colour
+  color: number;
   stops: BusStop[];
-  speedKmh: number;     // city speed, ~20–40
-  dwellSeconds: number; // time stopped at each stop
+  speedKmh: number;
+  dwellSeconds: number; // default dwell for flagged stops
 }
 
-/** Convert chunk grid coords to approximate world position */
-function cp(cx: number, cy: number, offX = 0, offZ = 0): THREE.Vector3 {
-  return new THREE.Vector3((cx - 4) * C + offX, 0.5, (cy - 4) * C + offZ);
+// Helper: a road waypoint from tile coords (pass-through unless named+dwell).
+function wp(tx: number, ty: number): BusStop {
+  const w = tileToWorld(tx, ty);
+  return { name: '', position: new THREE.Vector3(w.x, 0.5, w.z), districtId: '' };
+}
+// Helper: a named timed stop.
+function stop(tx: number, ty: number, name: string, districtId: string, dwell = 6): BusStop {
+  const w = tileToWorld(tx, ty);
+  return { name, position: new THREE.Vector3(w.x, 0.5, w.z), districtId, dwell };
 }
 
 export const BUS_ROUTES: BusRoute[] = [
-  // ── Route A: Downtown ↔ Harbor ──────────────────────────────────────────
+  // ── Route A: Cross-Town Avenue (the central row-7 boulevard, W↔E) ──────────
   {
     id: 'routeA',
-    name: 'Harbor Express',
+    name: 'Cross-Town Line',
     color: 0x29b6f6,
-    speedKmh: 28,
+    speedKmh: 30,
     dwellSeconds: 6,
     stops: [
-      { name: 'Arena Square',   position: cp(4, 4,  0, 0),   districtId: 'downtown' },
-      { name: 'Midtown North',  position: cp(4, 2,  0, 0),   districtId: 'midtown'  },
-      { name: 'Harbor Market',  position: cp(6, 0, -8, 10),  districtId: 'harbor'   },
-      { name: 'The Anchor Cafe',position: cp(8, 0, -8,  8),  districtId: 'harbor'   },
-      { name: 'Pier Row',       position: cp(7, 2,  0,  0),  districtId: 'harbor'   },
-      { name: 'Midtown East',   position: cp(7, 4,  0,  0),  districtId: 'midtown'  },
+      stop(0, 7, 'Ironworks West', 'industrial'),
+      wp(2, 7), wp(4, 7),
+      stop(4, 7, 'Downtown North', 'downtown'),
+      wp(7, 7), wp(9, 7),
+      stop(9, 7, 'Central Station', 'station', 8),
+      wp(11, 7), wp(13, 7),
+      stop(13, 7, 'Greenway Gate', 'park'),
+      wp(15, 7),
+      // return leg along the same avenue
+      wp(13, 7), wp(11, 7), wp(9, 7), wp(7, 7), wp(4, 7), wp(2, 7),
     ],
   },
 
-  // ── Route B: Maple Quarter ↔ Ironworks ─────────────────────────────────
+  // ── Route B: North Ring + Airport spur (row 3 avenue + col 10 up to airport)
   {
     id: 'routeB',
-    name: 'West Connector',
+    name: 'Airport Connector',
     color: 0x66bb6a,
+    speedKmh: 26,
+    dwellSeconds: 7,
+    stops: [
+      stop(10, 0, 'Skyhaven Airport', 'airport', 9),
+      wp(10, 1), wp(10, 2), wp(10, 3),
+      stop(4, 3, 'North Avenue', 'downtown'),
+      wp(2, 3),
+      stop(0, 3, 'Maple Village Rd', 'village'),
+      wp(2, 3), wp(4, 3), wp(9, 3),
+      stop(13, 3, 'Greenway North', 'park'),
+      wp(10, 3), wp(10, 2), wp(10, 1),
+    ],
+  },
+
+  // ── Route C: Downtown ↔ Seaside loop (col 4 spine + promenade row 13) ──────
+  {
+    id: 'routeC',
+    name: 'Seaside Loop',
+    color: 0xffca28,
     speedKmh: 22,
     dwellSeconds: 8,
     stops: [
-      { name: 'Maple Park',     position: cp(1, 1,  0,  0),  districtId: 'maple'    },
-      { name: 'Midtown West',   position: cp(1, 4,  0,  0),  districtId: 'midtown'  },
-      { name: 'Ironworks Gate', position: cp(1, 6,  8,  0),  districtId: 'ironworks'},
-      { name: 'Depot Fuel',     position: cp(1, 7,  0,  0),  districtId: 'ironworks'},
-      { name: 'Midtown SW',     position: cp(1, 5,  0,  0),  districtId: 'midtown'  },
-    ],
-  },
-
-  // ── Route C: City Green → Festival Plaza → Southside ───────────────────
-  {
-    id: 'routeC',
-    name: 'Greenway Loop',
-    color: 0xffca28,
-    speedKmh: 18,
-    dwellSeconds: 10,
-    stops: [
-      { name: 'City Green',     position: cp(6, 6,  0,  0),  districtId: 'greenway' },
-      { name: 'Festival Plaza', position: cp(7, 7,  0,  0),  districtId: 'greenway' },
-      { name: 'Sunset Lawn',    position: cp(8, 8, -8, -8),  districtId: 'greenway' },
-      { name: 'Southside Brew', position: cp(4, 7,  0, -8),  districtId: 'midtown'  },
-      { name: 'Midtown S',      position: cp(4, 6,  0,  0),  districtId: 'midtown'  },
+      stop(4, 8, 'City Hall Plaza', 'downtown', 8),
+      wp(4, 9), wp(4, 10), wp(4, 11), wp(4, 12),
+      wp(4, 13),
+      stop(4, 13, 'West Promenade', 'seaside'),
+      wp(7, 13),
+      stop(7, 13, 'Seaside Beach', 'seaside', 9),
+      wp(11, 13),
+      stop(11, 13, 'East Promenade', 'seaside'),
+      wp(7, 13), wp(4, 13), wp(4, 12), wp(4, 11), wp(4, 10), wp(4, 9),
     ],
   },
 ];

@@ -8,12 +8,10 @@
 import * as THREE from 'three';
 import { TrafficLight } from './TrafficLight';
 import type { IUpdate } from '../interfaces/IUpdate';
-import { CITY_MAP } from '../city/CityMap';
-import { GVar } from '../utils/GVar';
+import { intersectionTiles, tileToWorld } from '../city/CityDesign';
 import { MiscFunc } from '../utils/MiscFunc';
 
-const CHUNK = GVar.CHUNK_SIZE;   // 60
-const CORNER_OFFSET = 28;        // how far from chunk centre to place the light
+const CORNER_OFFSET = 16;        // how far from intersection centre to place lights
 
 export class TrafficLightManager {
   private lights: TrafficLight[] = [];
@@ -23,60 +21,35 @@ export class TrafficLightManager {
     this.scene = scene;
   }
 
-  public spawn(unlockedDistrictIds: string[]): void {
-    // Place one light per chunk corner — only for unlocked districts
+  public spawn(_unlockedDistrictIds?: string[]): void {
+    // Place lights at REAL road intersections of the authored city.
     const corners: [number, number][] = [
       [-CORNER_OFFSET, -CORNER_OFFSET],
-      [ CORNER_OFFSET, -CORNER_OFFSET],
-      [-CORNER_OFFSET,  CORNER_OFFSET],
       [ CORNER_OFFSET,  CORNER_OFFSET],
     ];
 
     let count = 0;
-    for (const entry of CITY_MAP.chunks) {
-      if (!unlockedDistrictIds.includes(entry.districtId)) continue;
-      // Only place on every other chunk to avoid overcrowding
-      if ((entry.x + entry.y) % 2 !== 0) continue;
-
-      const cx = (entry.x - 4) * CHUNK;
-      const cz = (entry.y - 4) * CHUNK;
-
-      for (let i = 0; i < corners.length; i++) {
-        const [ox, oz] = corners[i];
-        const light = new TrafficLight(MiscFunc.random()); // random phase offset
+    for (const [tx, ty] of intersectionTiles()) {
+      const { x: cx, z: cz } = tileToWorld(tx, ty);
+      const phase = MiscFunc.random();
+      for (const [ox, oz] of corners) {
+        const light = new TrafficLight(phase);
         light.position.set(cx + ox, 0, cz + oz);
         this.scene.add(light);
         this.lights.push(light);
         count++;
       }
     }
-    console.log(`[TrafficLightManager] Spawned ${count} traffic lights`);
+    console.log(`[TrafficLightManager] Spawned ${count} traffic lights at ${intersectionTiles().length} intersections`);
   }
 
   public update(ud: IUpdate): void {
     for (const light of this.lights) light.update(ud);
   }
 
-  public addForDistrict(districtId: string): void {
-    // Called when a new district unlocks mid-session
-    const corners: [number, number][] = [
-      [-CORNER_OFFSET, -CORNER_OFFSET],
-      [ CORNER_OFFSET, -CORNER_OFFSET],
-      [-CORNER_OFFSET,  CORNER_OFFSET],
-      [ CORNER_OFFSET,  CORNER_OFFSET],
-    ];
-    for (const entry of CITY_MAP.chunks) {
-      if (entry.districtId !== districtId) continue;
-      if ((entry.x + entry.y) % 2 !== 0) continue;
-      const cx = (entry.x - 4) * CHUNK;
-      const cz = (entry.y - 4) * CHUNK;
-      for (const [ox, oz] of corners) {
-        const light = new TrafficLight(MiscFunc.random());
-        light.position.set(cx + ox, 0, cz + oz);
-        this.scene.add(light);
-        this.lights.push(light);
-      }
-    }
+  public addForDistrict(_districtId: string): void {
+    // No-op in the finite authored city: all intersections are placed at spawn().
+    // Kept for API compatibility with the legacy district-unlock flow.
   }
 
   public dispose(): void {

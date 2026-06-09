@@ -8,18 +8,22 @@ import * as THREE from 'three';
 import { Pedestrian, type PedestrianMood } from './Pedestrian';
 import type { IUpdate } from '../interfaces/IUpdate';
 import type { CityClockSnapshot } from '../stream/CityClock';
-import { CITY_MAP } from '../city/CityMap';
+import { walkableTiles, tileToWorld } from '../city/CityDesign';
 import { MiscFunc } from '../utils/MiscFunc';
 import { GVar } from '../utils/GVar';
 
-const MAX_PEDS_PER_CHUNK = GVar.isMobile() ? 2 : 4;
-const DISTRICT_MOOD_MAP: Record<string, PedestrianMood[]> = {
+const MAX_PEDS_PER_TILE = GVar.isMobile() ? 2 : 4;
+// Mood mix per authored zone id (CityDesign zones).
+const ZONE_MOOD_MAP: Record<string, PedestrianMood[]> = {
   downtown:   ['commuter', 'worker', 'commuter'],
-  maple:      ['shopper', 'jogger', 'shopper'],
-  harbor:     ['shopper', 'shopper', 'commuter'],
-  ironworks:  ['worker', 'worker', 'commuter'],
-  greenway:   ['jogger', 'jogger', 'shopper'],
   midtown:    ['commuter', 'shopper', 'worker'],
+  market:     ['shopper', 'shopper', 'commuter'],
+  village:    ['shopper', 'jogger', 'shopper'],
+  industrial: ['worker', 'worker', 'commuter'],
+  park:       ['jogger', 'jogger', 'shopper'],
+  seaside:    ['jogger', 'shopper', 'jogger'],
+  station:    ['commuter', 'commuter', 'worker'],
+  airport:    ['commuter', 'worker', 'commuter'],
 };
 
 export class PedestrianManager {
@@ -35,20 +39,23 @@ export class PedestrianManager {
    * Spawns initial pedestrians across all mapped chunks.
    */
   public spawnInitial(): void {
-    for (const entry of CITY_MAP.chunks) {
-      const key = `${entry.x}_${entry.y}`;
-      const moods = DISTRICT_MOOD_MAP[entry.districtId] ?? ['commuter'];
-      const count = 1 + Math.floor(MiscFunc.random() * MAX_PEDS_PER_CHUNK);
+    // Spawn pedestrians on REAL walkable tiles (streets, plazas, station, beach
+    // promenade) of the authored finite city — so they walk where viewers expect.
+    for (const tile of walkableTiles()) {
+      const key = `${tile.x}_${tile.y}`;
+      const moods = ZONE_MOOD_MAP[tile.zoneId ?? ''] ?? ['commuter'];
+      const { x: wx, z: wz } = tileToWorld(tile.x, tile.y);
+      const count = 1 + Math.floor(MiscFunc.random() * MAX_PEDS_PER_TILE);
       const peds: Pedestrian[] = [];
       for (let i = 0; i < count; i++) {
         const mood = MiscFunc.getRandElement(moods);
-        const ped = new Pedestrian(mood);
+        const ped = new Pedestrian(mood, wx, wz);
         this.scene.add(ped);
         peds.push(ped);
       }
       this.pedestrians.set(key, peds);
     }
-    console.log(`[PedestrianManager] Spawned pedestrians across ${this.pedestrians.size} chunks`);
+    console.log(`[PedestrianManager] Spawned pedestrians across ${this.pedestrians.size} street tiles`);
   }
 
   /**

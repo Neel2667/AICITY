@@ -223,3 +223,65 @@ export function worldBounds() {
     maxZ: (GRID_H - 1 - ORIGIN_Y) * TILE + half,
   };
 }
+
+// ─── Street network helpers (for buses, pedestrians, traffic) ─────────────────
+
+/** Tile kinds that an agent can stand/walk/drive on. */
+const WALKABLE: Set<TileKind> = new Set([
+  'road', 'marketSquare', 'townPlaza', 'promenade',
+  'trainStation', 'airportTerminal',
+]);
+const DRIVABLE: Set<TileKind> = new Set(['road']);
+
+export function isRoad(x: number, y: number): boolean {
+  const t = getTile(x, y);
+  return !!t && t.kind === 'road';
+}
+
+/** All road tile coordinates. */
+export function roadTiles(): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  for (let y = 0; y < GRID_H; y++)
+    for (let x = 0; x < GRID_W; x++)
+      if (TILES[y][x].kind === 'road') out.push([x, y]);
+  return out;
+}
+
+/** Walkable tiles (roads + plazas + station + promenade) for pedestrian spawn. */
+export function walkableTiles(): Tile[] {
+  const out: Tile[] = [];
+  for (let y = 0; y < GRID_H; y++)
+    for (let x = 0; x < GRID_W; x++)
+      if (WALKABLE.has(TILES[y][x].kind)) out.push(TILES[y][x]);
+  return out;
+}
+
+export function isDrivable(x: number, y: number): boolean {
+  const t = getTile(x, y);
+  return !!t && DRIVABLE.has(t.kind);
+}
+
+/**
+ * Road intersection tiles: a road tile that has road neighbours on BOTH the
+ * horizontal and vertical axes (a true crossroads). Used for traffic lights.
+ */
+export function intersectionTiles(): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  for (const [x, y] of roadTiles()) {
+    const h = isRoad(x - 1, y) || isRoad(x + 1, y);
+    const v = isRoad(x, y - 1) || isRoad(x, y + 1);
+    if (h && v) out.push([x, y]);
+  }
+  return out;
+}
+
+/**
+ * Convert a list of tile coords into a world-space waypoint path (y at ground).
+ * Used to author bus routes directly from the map.
+ */
+export function tilesToPath(tiles: Array<[number, number]>, y = 0.5): Array<{ x: number; y: number; z: number }> {
+  return tiles.map(([tx, ty]) => {
+    const w = tileToWorld(tx, ty);
+    return { x: w.x, y, z: w.z };
+  });
+}

@@ -102,6 +102,9 @@ export class StreamOverlay {
     CityEventBus.on('nameSubmitted', (p) => {
       this.pushDynamic(`💬 ${p['author']} suggested name: "${p['nameText']}"`);
     });
+    CityEventBus.on('trainArrived', (p) => {
+      this.pushDynamic(`🚂 Train now arriving at ${p['station'] ?? 'Central Station'}`);
+    });
     // Guided tour: show the place we're currently flying over.
     CityEventBus.on('tourStop', (p) => {
       const icon = (p['icon'] as string) ?? '📍';

@@ -23,6 +23,9 @@ import { ambientAudio }          from './audio/AmbientAudio';
 import { PedestrianManager }     from './pedestrians/PedestrianManager';
 import { TrafficLightManager }   from './traffic/TrafficLightManager';
 import { clipRecorder }          from './clips/ClipRecorder';
+import { CitySignage }           from './city/CitySignage';
+import { LandmarkLife }          from './city/LandmarkLife';
+import { updateWater }           from './city/LandmarkFactory';
 
 // ─── Core ─────────────────────────────────────────────────────────────────────
 const container     = document.getElementById('app') as HTMLElement;
@@ -36,6 +39,8 @@ const busManager      = new BusManager(sceneManager.scene);
 const fireworks       = new FireworksController(sceneManager.scene);
 const pedManager      = new PedestrianManager(sceneManager.scene);
 const trafficLights   = new TrafficLightManager(sceneManager.scene);
+const citySignage     = new CitySignage(sceneManager.scene);
+const landmarkLife    = new LandmarkLife(sceneManager.scene);
 
 // Give clip recorder access to the Three.js canvas
 setTimeout(() => {
@@ -47,7 +52,9 @@ setTimeout(() => {
 setTimeout(() => {
   busManager.spawn();
   pedManager.spawnInitial();
-  trafficLights.spawn(['downtown', 'maple', 'harbor', 'midtown']); // unlocked districts
+  trafficLights.spawn(); // placed at real road intersections
+  citySignage.build();   // floating landmark labels
+  landmarkLife.build();  // train, plane, boats
   console.log('[AICITY] Phase 5 subsystems spawned');
 }, 600);
 
@@ -177,6 +184,9 @@ function animate() {
     pedManager.update(ud, clockSnapshot);
     fireworks.update(ud);
     trafficLights.update(ud);
+    citySignage.update(ud);
+    landmarkLife.update(ud);
+    updateWater(ud.elapsed);
   }
 
   sceneManager.update(clockSnapshot, weatherSnapshot);

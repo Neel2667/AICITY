@@ -77,12 +77,26 @@ function rng(x: number, y: number, salt = 0): number {
   return s - Math.floor(s);
 }
 
+// ─── Shared animated water material (all ocean tiles shimmer together) ────────
+const _waterMat = new THREE.MeshStandardMaterial({
+  color: 0x2f7fb5, roughness: 0.22, metalness: 0.15,
+});
+let _waterTime = 0;
+/** Call each frame to make the ocean gently shimmer. */
+export function updateWater(elapsed: number): void {
+  _waterTime = elapsed;
+  // subtle hue + brightness ripple
+  const s = 0.5 + 0.5 * Math.sin(_waterTime * 0.6);
+  _waterMat.color.setHSL(0.56, 0.55, 0.40 + s * 0.06);
+}
+
 // ─── Natural / edge tiles ────────────────────────────────────────────────────
 export function makeOcean(x: number, y: number): THREE.Object3D {
   const g = new THREE.Group();
-  const water = plane(TILE + 1, TILE + 1, 0x2f7fb5, -0.4);
-  (water.material as THREE.MeshStandardMaterial).roughness = 0.25;
-  (water.material as THREE.MeshStandardMaterial).metalness = 0.1;
+  const water = new THREE.Mesh(new THREE.PlaneGeometry(TILE + 1, TILE + 1), _waterMat);
+  water.rotation.x = -Math.PI / 2;
+  water.position.y = -0.4;
+  water.receiveShadow = true;
   g.add(water);
   // a couple of gentle "wave" strips
   if (rng(x, y) > 0.5) {

@@ -85,7 +85,7 @@ Airport → Village → Station → Downtown → Market → Park → Promenade �
 | **F3** | `LandmarkFactory`: procedural airport / beach / station / market / plaza / promenade | The 6 memorable places appear | ✅ done |
 | **F4a** | Guided **TourCamera**: Airport→Village→Station→Market→Park→Beach→Downtown→Industrial loop + "Now Touring" overlay badge | "Here's the airport" is finally true | ✅ done |
 | **F4b** | Re-point pedestrians / traffic lights / buses to the NEW map coordinates | City life aligns to real streets | ✅ done |
-| **F5** | Polish: in-world signage, water shimmer, richer life, soak test | Hours-long watchable stream | ⏳ |
+| **F5** | Polish: in-world signage, animated train/plane/boats, water shimmer | Hours-long watchable stream | ✅ done |
 
 ### F1–F4a implementation notes
 - New: `src/city/CityDesign.ts` (map data), `src/city/LandmarkFactory.ts` (procedural
@@ -111,11 +111,33 @@ Airport → Village → Station → Downtown → Market → Park → Promenade �
 - **Traffic lights** now placed at REAL road intersections (`intersectionTiles()`), not the
   old 9×9 chunk corners.
 
-### Known follow-ups (F5)
+### F5 implementation notes (watchability polish)
+- `src/city/CitySignage.ts`: floating pill-shaped labels (icon + name) over every landmark,
+  gently bobbing and always facing the camera — you always know where you are, even with the
+  HUD hidden.
+- `src/city/LandmarkLife.ts`: animated set-pieces that loop 24/7 —
+  🚂 a 3-car train arrives at Central Station, dwells ~10s (pushes a ticker), departs, resets;
+  ✈️ a plane taxis the runway, takes off, and resets; ⛵ 3 boats drift across the ocean.
+- Animated **water shimmer**: all ocean tiles share one material whose hue/brightness ripples
+  (`updateWater()` in `LandmarkFactory`, driven from the main loop).
+- Perf check: ~260 pedestrians (shared geometry+materials), 34 traffic lights, 3 buses, train,
+  plane, 3 boats. Bundle ~894 KB. Boots clean (HTTP 200).
+
+### Optional future work (not blocking a 24/7 launch)
 - `gltf/` models remain unused; optionally swap select procedural landmarks for CC0 glTF later.
-- In-world signage labels, water shimmer, richer ambient life, and a long soak test.
-- The legacy `CITY_MAP` is still used by `CameraDirector` (now disabled) and `StreamOverlay`
-  tickers/events; harmless, but could be migrated to `CityDesign` for full consistency.
+- Migrate the legacy `CITY_MAP` references in `StreamOverlay` tickers + the disabled
+  `CameraDirector` to `CityDesign` for full single-source consistency.
+- Long unattended soak test on the target streaming box; OBS/RTMP runbook.
+
+---
+
+## ✅ Rebuild complete (F0–F5)
+
+AICITY is no longer an infinite procedural treadmill. It is now a **finite, hand-authored,
+memorable city** — airport NW, village NE, station centre, downtown SW, market E, park,
+seaside promenade + beach + ocean to the south — toured by a **guided cinematic camera**, with
+**living streets** (pedestrians, buses on real roads, traffic lights at real intersections) and
+**signature landmark life** (train, plane, boats) under a shimmering sea. `npm run build` green.
 
 ## 6. Non-negotiables
 

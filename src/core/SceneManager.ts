@@ -570,35 +570,69 @@ export class SceneManager {
     protected applyKenneyBuildings(): void {
         if (!this.chunkScene || !kenneyBuildings.hasAny()) return;
         const N = GVar.CHUNK_COUNT;
+        const CS = GVar.CHUNK_SIZE;
+        // shared grass material so every chunk has green ground (no black gaps)
+        const grassMat = new THREE.MeshStandardMaterial({ color: 0x3f7d3a, roughness: 1 });
+
         this.chunkScene.forEachChunk((container: any) => {
             const chunk: any = container.getObjectByName('chunk');
             if (!chunk) return;
             const oldBlock: THREE.Object3D | undefined = chunk.block;
             if (!oldBlock) return;
 
-            // tile position → district feel (centre = downtown, edges = suburb)
             const cx = container.userData['centeredX'] ?? 0;
             const cy = container.userData['centeredY'] ?? 0;
             const distC = Math.max(Math.abs(cx), Math.abs(cy)) / (N / 2); // 0..1
             const seed = Math.abs(Math.floor(Math.sin(cx * 49.3 + cy * 97.1) * 10000));
 
+            // remove the original block
+            chunk.remove(oldBlock);
+
+            // 1) GRASS GROUND PLATE under the building footprint → kills the black gaps
+            const grass = new THREE.Mesh(new THREE.PlaneGeometry(CS * 0.62, CS * 0.62), grassMat);
+            grass.rotation.x = -Math.PI / 2;
+            grass.position.y = 0.05;
+            grass.receiveShadow = true;
+            chunk.add(grass);
+
+            // 2) ~18% of tiles become parks (grass + trees, no building) for greenery
+            const isPark = (seed % 11 === 0) || (seed % 11 === 3);
+            if (isPark) {
+                const treeCount = 3 + (seed % 3);
+                for (let i = 0; i < treeCount; i++) {
+                    const t = kenneyBuildings.get('trees', (i + seed) % 2 ? 'tree-large' : 'tree-small');
+                    if (!t) break;
+                    const s2 = Math.abs(Math.floor(Math.sin((cx + i) * 12.9 + (cy - i) * 78.2) * 10000));
+                    t.position.set((s2 % 30) - 15, 0, ((s2 >> 4) % 30) - 15);
+                    t.rotation.y = (s2 % 360) * Math.PI / 180;
+                    chunk.add(t);
+                }
+                chunk.block = grass;
+                return;
+            }
+
+            // 3) otherwise place a Kenney building, by district feel
             let group: KenneyGroup;
             if (distC < 0.32)      group = (seed % 3 === 0) ? 'modular' : 'downtown';
             else if (distC < 0.6)  group = (seed % 2 === 0) ? 'downtown' : 'suburb';
             else                   group = (seed % 4 === 0) ? 'industrial' : 'suburb';
 
             const names = kenneyBuildings.names(group);
-            if (!names.length) return;
+            if (!names.length) { chunk.block = grass; return; }
             const name = names[seed % names.length];
             const building = kenneyBuildings.get(group, name);
-            if (!building) return;
+            if (!building) { chunk.block = grass; return; }
 
-            // swap: remove original block, drop in the Kenney building
-            chunk.remove(oldBlock);
             building.position.set(0, 0, 0);
             building.rotation.y = (seed % 4) * (Math.PI / 2);
             chunk.add(building);
             chunk.block = building;
+
+            // a couple of trees beside the building for extra greenery
+            if (seed % 3 === 0) {
+                const t = kenneyBuildings.get('trees', 'tree-small');
+                if (t) { t.position.set(18, 0, 18); chunk.add(t); }
+            }
         });
     }
 

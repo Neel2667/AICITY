@@ -1,3 +1,7 @@
+/**
+ * main.ts — AICITY Live Phase 2
+ * Boots the city simulation with CityState, CityMap, CityEventBus wired in.
+ */
 import { SceneManager } from './core/SceneManager';
 import { CubeObject } from './objects/CubeObject';
 import { setupUI } from './ui/Controls';
@@ -6,6 +10,8 @@ import { CityClock } from './stream/CityClock';
 import { streamConfig } from './stream/StreamConfig';
 import { StreamOverlay } from './stream/StreamOverlay';
 import { getWeatherFor } from './weather/WeatherState';
+import { CityState } from './city/CityState';
+import { CityEventBus } from './city/CityEventBus';
 
 const container = document.getElementById('app') as HTMLElement;
 const cityClock = new CityClock(streamConfig);
@@ -14,28 +20,30 @@ const streamOverlay = streamConfig.overlayEnabled ? new StreamOverlay(streamConf
 
 if (streamConfig.devMode) {
   setupUI({
-    addCube: () => {
-      const newCube = new CubeObject();
-      sceneManager.addObject(newCube);
-    },
-    addSphere: () => {
-      // Reserved for future development-only diagnostics.
-    },
-    resetScene: () => {
-      sceneManager.removeAllObjects();
-    },
+    addCube: () => { sceneManager.addObject(new CubeObject()); },
+    addSphere: () => { /* reserved */ },
+    resetScene: () => { sceneManager.removeAllObjects(); },
   });
-
   setupFPSCounter();
 }
 
+CityEventBus.on('constructionComplete', (p) => {
+  console.log(`[AICITY] 🏗️ Construction complete: ${p['label']}`);
+});
+CityEventBus.on('districtUnlocked', (p) => {
+  console.log(`[AICITY] 🗺️ District unlocked: ${p['name']}`);
+});
+CityEventBus.on('viewerContribution', (p) => {
+  console.log(`[AICITY] 💬 @${p['name']} → ${p['target']}`);
+});
+
 function animate() {
   requestAnimationFrame(animate);
-
   const clockSnapshot = cityClock.getSnapshot();
   const weatherSnapshot = getWeatherFor(clockSnapshot);
-
-  streamOverlay?.update(clockSnapshot, weatherSnapshot);
+  CityState.tick(clockSnapshot.dayNumber);
+  const cityStateSnapshot = CityState.getSnapshot();
+  streamOverlay?.update(clockSnapshot, weatherSnapshot, cityStateSnapshot);
   sceneManager.update(clockSnapshot, weatherSnapshot);
 }
 

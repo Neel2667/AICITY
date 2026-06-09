@@ -1,8 +1,4 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
   color-scheme: dark;
@@ -10,162 +6,71 @@
   background: #0b1026;
 }
 
-html,
-body {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
+html, body {
+  width: 100%; height: 100%; overflow: hidden;
   background: radial-gradient(circle at 50% 20%, #263553 0%, #0b1026 55%, #070a16 100%);
   color: #fffaf0;
 }
 
-#app {
-  width: 100vw;
-  height: 100vh;
-  position: relative;
-}
-
-canvas {
-  display: block;
-}
+#app { width: 100vw; height: 100vh; position: relative; }
+canvas { display: block; }
 
 .status-bar {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  z-index: 120;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 999px;
-  background: rgba(8, 12, 28, 0.64);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
-  backdrop-filter: blur(14px);
-  padding: 8px 16px;
-  color: rgba(255, 255, 255, 0.86);
-  font-size: 13px;
+  position: absolute; bottom: 20px; left: 20px; z-index: 120;
+  border: 1px solid rgba(255,255,255,0.16); border-radius: 999px;
+  background: rgba(8,12,28,0.64); box-shadow: 0 16px 40px rgba(0,0,0,0.28);
+  backdrop-filter: blur(14px); padding: 8px 16px;
+  color: rgba(255,255,255,0.86); font-size: 13px;
 }
 
 .stream-overlay {
-  pointer-events: none;
-  position: fixed;
-  inset: 0;
-  z-index: 110;
-  padding: 24px;
-  color: #fff7e8;
-  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.42);
+  pointer-events: none; position: fixed; inset: 0; z-index: 110;
+  padding: 24px; color: #fff7e8; text-shadow: 0 2px 20px rgba(0,0,0,0.42);
 }
 
 .stream-card {
   position: absolute;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 18px;
-  background: linear-gradient(135deg, rgba(10, 16, 34, 0.52), rgba(10, 16, 34, 0.24));
-  box-shadow: 0 18px 70px rgba(0, 0, 0, 0.28);
-  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255,255,255,0.14); border-radius: 18px;
+  background: linear-gradient(135deg, rgba(10,16,34,0.60), rgba(10,16,34,0.28));
+  box-shadow: 0 18px 70px rgba(0,0,0,0.32); backdrop-filter: blur(18px);
 }
 
-.stream-brand {
-  left: 24px;
-  top: 24px;
-  min-width: 280px;
-  padding: 18px 20px;
+.stream-brand { left: 24px; top: 24px; min-width: 280px; padding: 18px 20px; }
+.stream-kicker { margin-bottom: 8px; color: rgba(255,222,173,0.82); font-size: 11px; font-weight: 800; letter-spacing: 0.18em; }
+.stream-title { font-size: 30px; font-weight: 850; letter-spacing: -0.04em; line-height: 1; }
+.stream-tagline { margin-top: 8px; color: rgba(255,247,232,0.72); font-size: 14px; }
+
+.stream-status { right: 24px; top: 24px; min-width: 230px; padding: 16px 18px; text-align: right; }
+.stream-clock { font-variant-numeric: tabular-nums; font-size: 34px; font-weight: 850; line-height: 1; }
+.stream-day { margin-top: 8px; color: rgba(255,247,232,0.74); font-size: 13px; font-weight: 700; }
+.stream-weather { margin-top: 10px; color: rgba(255,222,173,0.90); font-size: 14px; font-weight: 800; }
+
+.stream-event {
+  margin-top: 10px; display: inline-block;
+  background: rgba(255,180,80,0.18); border: 1px solid rgba(255,200,100,0.30);
+  border-radius: 8px; padding: 4px 10px;
+  color: rgba(255,232,160,0.95); font-size: 13px; font-weight: 700;
 }
 
-.stream-kicker {
-  margin-bottom: 8px;
-  color: rgba(255, 222, 173, 0.82);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.18em;
-}
-
-.stream-title {
-  font-size: 30px;
-  font-weight: 850;
-  letter-spacing: -0.04em;
-  line-height: 1;
-}
-
-.stream-tagline {
-  margin-top: 8px;
-  color: rgba(255, 247, 232, 0.72);
-  font-size: 14px;
-}
-
-.stream-status {
-  right: 24px;
-  top: 24px;
-  min-width: 210px;
-  padding: 16px 18px;
-  text-align: right;
-}
-
-.stream-clock {
-  font-variant-numeric: tabular-nums;
-  font-size: 34px;
-  font-weight: 850;
-  line-height: 1;
-}
-
-.stream-day {
-  margin-top: 8px;
-  color: rgba(255, 247, 232, 0.74);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.stream-weather {
-  margin-top: 10px;
-  color: rgba(255, 222, 173, 0.90);
-  font-size: 14px;
-  font-weight: 800;
-}
+.stream-stats { margin-top: 10px; color: rgba(200,220,255,0.70); font-size: 12px; font-weight: 600; }
 
 .stream-ticker {
-  position: absolute;
-  left: 50%;
-  bottom: 26px;
-  transform: translateX(-50%);
-  max-width: min(760px, calc(100vw - 48px));
-  border: 1px solid rgba(255, 255, 255, 0.13);
-  border-radius: 999px;
-  background: rgba(8, 12, 28, 0.44);
-  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.24);
-  backdrop-filter: blur(16px);
-  padding: 10px 18px;
-  color: rgba(255, 247, 232, 0.78);
-  font-size: 13px;
-  font-weight: 700;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%);
+  max-width: min(800px, calc(100vw - 48px));
+  border: 1px solid rgba(255,255,255,0.13); border-radius: 999px;
+  background: rgba(8,12,28,0.50); box-shadow: 0 16px 50px rgba(0,0,0,0.28);
+  backdrop-filter: blur(16px); padding: 10px 22px;
+  color: rgba(255,247,232,0.80); font-size: 13px; font-weight: 700;
+  text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
 @media (max-width: 720px) {
-  .stream-overlay {
-    padding: 14px;
-  }
-
-  .stream-brand,
-  .stream-status {
-    top: 14px;
-  }
-
-  .stream-brand {
-    left: 14px;
-    min-width: 220px;
-  }
-
-  .stream-status {
-    right: 14px;
-    min-width: 150px;
-  }
-
-  .stream-title {
-    font-size: 22px;
-  }
-
-  .stream-clock {
-    font-size: 25px;
-  }
+  .stream-overlay { padding: 14px; }
+  .stream-brand, .stream-status { top: 14px; }
+  .stream-brand { left: 14px; min-width: 200px; padding: 14px 16px; }
+  .stream-title { font-size: 20px; }
+  .stream-status { right: 14px; min-width: 150px; padding: 12px 14px; }
+  .stream-clock { font-size: 26px; }
+  .stream-weather, .stream-stats { font-size: 11px; }
+  .stream-ticker { font-size: 11px; padding: 8px 16px; bottom: 16px; }
 }

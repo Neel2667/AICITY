@@ -17,6 +17,9 @@ import type { CityClockSnapshot } from '../stream/CityClock';
 import type { WeatherSnapshot } from '../weather/WeatherState';
 import { streamConfig } from '../stream/StreamConfig';
 import { CameraDirector } from '../camera/CameraDirector';
+import { CityBuilder } from '../city/CityBuilder';
+import { TourCamera } from '../camera/TourCamera';
+import { worldBounds } from '../city/CityDesign';
 //import TWEEN from 'three/examples/jsm/libs/tween.module.js'
 
 export class SceneManager {
@@ -44,6 +47,13 @@ export class SceneManager {
     protected dirLight: THREE.DirectionalLight | null = null;
     protected ambientLight: THREE.AmbientLight | null = null;
     protected cameraDirector: CameraDirector | null = null;
+
+    // ─── Finite authored city (F1–F4) ──────────────────────────────────────────
+    // When true, render the fixed, hand-authored, bounded city + guided tour
+    // camera instead of the legacy infinite procedural treadmill.
+    protected useAuthoredCity: boolean = true;
+    protected cityBuilder: CityBuilder | null = null;
+    protected tourCamera: TourCamera | null = null;
 
     protected resizeHandler: any = null;
 
@@ -130,41 +140,53 @@ export class SceneManager {
                 let lenarr: Array<number> = [arrBlocks.length, arrLanes.length, arrIntersections.length, arrCars.length, arrClouds.length];
                 console.log("The lenth is:" + JSON.stringify(lenarr));
 
-                this.cityChkTbl = new CityChunkTbl(arrBlocks, arrLanes, arrIntersections, arrCars, arrClouds);
-                this.chunkScene = new AppScene();
-                this.chunkScene.initChunks();
-                this.scene.add(this.chunkScene);
-
-
                 // 初始化方向光：
                 this.dirLight = this.renderer.initDirLight();
                 this._resizeShadowMapFrustum(window.innerWidth, window.innerHeight);
-                this.chunkScene.add(this.dirLight);
-                this.chunkScene.add(this.dirLight.target);
 
-                // 初始化keyEvent:
-                this.initKeyEvent();
+                if (this.useAuthoredCity) {
+                    // ─── FINITE AUTHORED CITY (real, tourable place) ───────────────
+                    this.cityBuilder = new CityBuilder();
+                    this.cityBuilder.ingest(arrBlocks);
+                    const cityGroup = this.cityBuilder.build();
+                    this.scene.add(cityGroup);
+                    this.scene.add(this.dirLight);
+                    this.scene.add(this.dirLight.target);
 
-                // 
-                // 处理smController:
-                this.smController = new SceneMoveController(this.inputMgr, this.chunkScene, this.cameraController);
+                    // Guided cinematic tour camera (replaces orbit/treadmill).
+                    this.tourCamera = new TourCamera(this.cameraController);
+                    this.cameraDirector = null;          // disable legacy director
+                    this.smController = null;            // no infinite panning
+                    this.cameraController.setCameraHeight(70);
 
-                // 第一次刷新测试效果：
-                this.refreshChunkScene();
+                    this.initKeyEvent();
+                    this.bInited = true;
+                    console.log('[AICITY] Finite authored city built — tour camera active');
+                } else {
+                    // ─── LEGACY INFINITE PROCEDURAL ENGINE (fallback) ─────────────
+                    this.cityChkTbl = new CityChunkTbl(arrBlocks, arrLanes, arrIntersections, arrCars, arrClouds);
+                    this.chunkScene = new AppScene();
+                    this.chunkScene.initChunks();
+                    this.scene.add(this.chunkScene);
 
-                // 响应chunkMove的消息处理与刷新：
-                EventMgr.getins().on("chunkmove", (xoff: number, yoff: number) => {
+                    this.chunkScene.add(this.dirLight);
+                    this.chunkScene.add(this.dirLight.target);
 
-                    this.iLastCx = xoff;
-                    this.iLastCy = yoff;
-                    this.gridCoords.x += xoff;
-                    this.gridCoords.y += yoff;
-
+                    this.initKeyEvent();
+                    this.smController = new SceneMoveController(this.inputMgr, this.chunkScene, this.cameraController);
                     this.refreshChunkScene();
-                });
-                this.cameraController.setCameraHeight(200);
 
-                this.bInited = true;
+                    EventMgr.getins().on("chunkmove", (xoff: number, yoff: number) => {
+                        this.iLastCx = xoff;
+                        this.iLastCy = yoff;
+                        this.gridCoords.x += xoff;
+                        this.gridCoords.y += yoff;
+                        this.refreshChunkScene();
+                    });
+                    this.cameraController.setCameraHeight(200);
+                    this.bInited = true;
+                }
+
                 this.inputMgr.on("mousewheel", (value: any) => {
                     if( !GVar.bCameraAnimState )
                         this.cameraController.updateHeight(value.deltaY * .05);
@@ -431,6 +453,21 @@ export class SceneManager {
         return this.cameraDirector;
     }
 
+    public getTourCamera() {
+        return this.tourCamera;
+    }
+
+    /** Keep the camera + look-at target inside the finite map bounds. */
+    protected clampCameraToMap(): void {
+        const b = worldBounds();
+        const cam = this.cameraController.camera;
+        cam.position.x = Math.min(b.maxX + 120, Math.max(b.minX - 120, cam.position.x));
+        cam.position.z = Math.min(b.maxZ + 120, Math.max(b.minZ - 120, cam.position.z));
+        const tgt = this.cameraController.getLookAtTarget();
+        tgt.x = Math.min(b.maxX, Math.max(b.minX, tgt.x));
+        tgt.z = Math.min(b.maxZ, Math.max(b.minZ, tgt.z));
+    }
+
         public update(clockSnapshot?: CityClockSnapshot, weatherSnapshot?: WeatherSnapshot): void {
         const delta: number = this.clock.getDelta();
         const elapsed: number = this.clock.getElapsedTime();
@@ -446,23 +483,21 @@ export class SceneManager {
             this.updateAtmosphere(clockSnapshot, weatherSnapshot);
         }
 
-        // 更新相机跟限：
-        this.updateFollow();
-
-        if (!this.followMobile) {
-            this.cameraDirector?.update({ delta: delta, elapsed: elapsed }, clockSnapshot);
+        if (this.useAuthoredCity) {
+            // Guided cinematic tour drives the camera.
+            this.tourCamera?.update({ delta: delta, elapsed: elapsed }, clockSnapshot);
+            this.cameraController.update();
+            this.clampCameraToMap();
+        } else {
+            // ─── legacy infinite engine path ───
+            this.updateFollow();
+            if (!this.followMobile) {
+                this.cameraDirector?.update({ delta: delta, elapsed: elapsed }, clockSnapshot);
+            }
+            this.cameraController.update();
+            if (this.bInited) this.smController?.update();
+            this.cityChkTbl?.update({ delta: delta, elapsed: elapsed });
         }
-
-        // 更新相机控制器
-        this.cameraController.update();
-
-        //! SceneMoveController:
-        if (this.bInited)
-            this.smController?.update();
-
-        // 
-        // CityTable内可移动元素更新：
-        this.cityChkTbl?.update({ delta: delta, elapsed: elapsed });
 
 
         // 渲染场景

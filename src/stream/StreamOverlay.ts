@@ -18,6 +18,7 @@ export class StreamOverlay {
   private readonly eventEl: HTMLDivElement;
   private readonly statsEl: HTMLDivElement;
   private readonly tickerEl: HTMLDivElement;
+  private readonly locationEl: HTMLDivElement;
   private lastUpdate = 0;
   private lastTickerRotate = 0;
   private tickerIndex = 0;
@@ -68,7 +69,13 @@ export class StreamOverlay {
     this.tickerEl = document.createElement('div');
     this.tickerEl.className = 'stream-ticker';
 
+    // "Now Touring" location badge — follows the guided tour camera.
+    this.locationEl = document.createElement('div');
+    this.locationEl.className = 'stream-location';
+    this.locationEl.style.display = 'none';
+
     this.root.appendChild(brand);
+    this.root.appendChild(this.locationEl);
     this.root.appendChild(status);
     this.root.appendChild(this.tickerEl);
     document.body.appendChild(this.root);
@@ -94,6 +101,18 @@ export class StreamOverlay {
     });
     CityEventBus.on('nameSubmitted', (p) => {
       this.pushDynamic(`💬 ${p['author']} suggested name: "${p['nameText']}"`);
+    });
+    // Guided tour: show the place we're currently flying over.
+    CityEventBus.on('tourStop', (p) => {
+      const icon = (p['icon'] as string) ?? '📍';
+      const name = (p['zoneName'] as string) ?? (p['name'] as string) ?? '';
+      const blurb = (p['blurb'] as string) ?? '';
+      this.locationEl.innerHTML =
+        `<div class="loc-kicker">NOW TOURING</div>` +
+        `<div class="loc-name">${icon} ${this.escape(name)}</div>` +
+        (blurb ? `<div class="loc-blurb">${this.escape(blurb)}</div>` : '');
+      this.locationEl.style.display = 'block';
+      this.pushDynamic(`${icon} Now showing: ${name}`);
     });
   }
 

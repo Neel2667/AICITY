@@ -185,7 +185,7 @@ export class ChatOverlay {
 
   // ─── Per-frame update ──────────────────────────────────────────────────────
 
-  public update(clock: CityClockSnapshot, cityState?: CityStateSnapshot): void {
+  public update(clock: CityClockSnapshot, _cityState?: CityStateSnapshot): void {
     if (clock.nowMs - this.lastRender < 500) return;
     this.lastRender = clock.nowMs;
 

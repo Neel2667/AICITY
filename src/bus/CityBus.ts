@@ -9,7 +9,6 @@ import * as THREE from 'three';
 import type { IUpdate } from '../interfaces/IUpdate';
 import type { BusRoute, BusStop } from './BusRoute';
 import { CityEventBus } from '../city/CityEventBus';
-import { MiscFunc } from '../utils/MiscFunc';
 
 const UNITS_PER_KMH = 1 / 3.6; // convert km/h → units/sec (1 unit ≈ 1 metre)
 

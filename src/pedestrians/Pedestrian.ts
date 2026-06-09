@@ -10,7 +10,6 @@
 import * as THREE from 'three';
 import type { IUpdate } from '../interfaces/IUpdate';
 import { MiscFunc } from '../utils/MiscFunc';
-import { GVar } from '../utils/GVar';
 
 export type PedestrianMood = 'worker' | 'shopper' | 'jogger' | 'commuter';
 

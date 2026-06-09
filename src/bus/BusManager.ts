@@ -13,7 +13,7 @@ import type { CityClockSnapshot } from '../stream/CityClock';
 export class BusManager {
   private buses: CityBus[] = [];
   private scene: THREE.Object3D;
-  private nightServiceOnly = false;
+
 
   constructor(scene: THREE.Object3D) {
     this.scene = scene;

@@ -35,12 +35,10 @@ export class TrafficLight extends THREE.Object3D {
   private phase: LightPhase = 'red';
   private phaseTimer: number;
   private readonly lensMap: Record<LightPhase, THREE.Mesh>;
-  private readonly phaseOffset: number;
 
   constructor(phaseOffset = 0) {
     super();
     this.name = 'trafficLight';
-    this.phaseOffset = phaseOffset;
 
     // Advance timer past offset so intersections are out of phase
     this.phaseTimer = PHASE_DURATIONS[this.phase] * (phaseOffset % 1);

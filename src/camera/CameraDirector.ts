@@ -26,7 +26,7 @@ export type CameraMode = 'orbit' | 'follow' | 'district' | 'event' | 'fireworks'
 
 const SCENE_DURATION = 45;      // seconds before auto-switching scene
 const LERP_POS  = 0.012;
-const LERP_TGT  = 0.014;
+
 const LERP_FAST = 0.035;        // faster lerp when explicitly voted
 
 // District focal points (world-space approximations, chunk-centre based)
@@ -136,7 +136,7 @@ export class CameraDirector {
     );
   }
 
-  private computeFollow(ud: IUpdate): void {
+  private computeFollow(_ud: IUpdate): void {
     if (!this.followTarget) { this.mode = 'orbit'; return; }
 
     const wp = new THREE.Vector3();
@@ -166,7 +166,7 @@ export class CameraDirector {
     );
   }
 
-  private computeEvent(ud: IUpdate, clock?: CityClockSnapshot): void {
+  private computeEvent(_ud: IUpdate, _clock?: CityClockSnapshot): void {
     // Point camera at a named landmark location for active event
     const landmark = MiscFunc.getRandElement(CITY_MAP.landmarks);
     const lx = (Math.round(landmark.chunkX) - 4) * 60;

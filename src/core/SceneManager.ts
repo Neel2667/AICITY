@@ -156,15 +156,25 @@ export class SceneManager {
                     this.scene.add(this.dirLight);
                     this.scene.add(this.dirLight.target);
 
-                    // Guided cinematic tour camera (replaces orbit/treadmill).
-                    this.tourCamera = new TourCamera(this.cameraController);
                     this.cameraDirector = null;          // disable legacy director
                     this.smController = null;            // no infinite panning
-                    this.cameraController.setCameraHeight(70);
+
+                    if (streamConfig.cameraMode === 'tour') {
+                        // Guided cinematic tour camera drives everything.
+                        this.tourCamera = new TourCamera(this.cameraController);
+                        this.cameraController.setCameraHeight(70);
+                        console.log('[AICITY] Guided tour camera active');
+                    } else {
+                        // Manual free-look: user controls orbit/zoom/pan.
+                        this.tourCamera = null;
+                        this.cameraController.camera.position.set(180, 160, 180);
+                        this.cameraController.getLookAtTarget().set(0, 0, 0);
+                        this.cameraController.enableManual();
+                        console.log('[AICITY] Manual camera active (orbit/zoom/pan). Add ?camera=tour for the guided tour.');
+                    }
 
                     this.initKeyEvent();
                     this.bInited = true;
-                    console.log('[AICITY] Tour camera active; loading city models…');
                 } else {
                     // ─── LEGACY INFINITE PROCEDURAL ENGINE (fallback) ─────────────
                     this.cityChkTbl = new CityChunkTbl(arrBlocks, arrLanes, arrIntersections, arrCars, arrClouds);
@@ -460,6 +470,22 @@ export class SceneManager {
         return this.tourCamera;
     }
 
+    /** Switch between manual free-look and the guided cinematic tour at runtime. */
+    public toggleCameraMode(): void {
+        if (!this.useAuthoredCity) return;
+        if (this.tourCamera) {
+            // Tour → Manual
+            this.tourCamera = null;
+            this.cameraController.enableManual();
+            console.log('[AICITY] Camera → manual');
+        } else {
+            // Manual → Tour
+            this.cameraController.enableLocked();
+            this.tourCamera = new TourCamera(this.cameraController);
+            console.log('[AICITY] Camera → guided tour');
+        }
+    }
+
     /** Keep the camera + look-at target inside the finite map bounds. */
     protected clampCameraToMap(): void {
         const b = worldBounds();
@@ -487,10 +513,20 @@ export class SceneManager {
         }
 
         if (this.useAuthoredCity) {
-            // Guided cinematic tour drives the camera.
-            this.tourCamera?.update({ delta: delta, elapsed: elapsed }, clockSnapshot);
-            this.cameraController.update();
-            this.clampCameraToMap();
+            if (this.tourCamera) {
+                // Guided cinematic tour drives the camera.
+                this.tourCamera.update({ delta: delta, elapsed: elapsed }, clockSnapshot);
+                this.cameraController.update();
+                this.clampCameraToMap();
+            } else {
+                // Manual free-look: OrbitControls drives the camera; only keep the
+                // look-at target near the map so the user doesn't lose the city.
+                this.cameraController.update();
+                const b = worldBounds();
+                const tgt = this.cameraController.getLookAtTarget();
+                tgt.x = Math.min(b.maxX, Math.max(b.minX, tgt.x));
+                tgt.z = Math.min(b.maxZ, Math.max(b.minZ, tgt.z));
+            }
         } else {
             // ─── legacy infinite engine path ───
             this.updateFollow();

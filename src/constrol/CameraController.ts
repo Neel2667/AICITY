@@ -237,4 +237,38 @@ export class CameraController {
         this.camera.aspect = container.clientWidth / container.clientHeight;
         this.camera.updateProjectionMatrix();
     }
+
+    // ─── Manual free-look mode ──────────────────────────────────────────────────
+    // Unlocks the OrbitControls so the viewer can rotate, zoom and pan freely.
+    public enableManual(): void {
+        if (this.bUseCC) return;
+        const c = this.controls as OrbitControls;
+        c.enabled = true;
+        c.enableRotate = true;
+        c.enablePan = true;
+        c.enableZoom = true;
+        c.enableDamping = true;
+        c.dampingFactor = 0.08;
+        c.zoomSpeed = 1.1;
+        c.rotateSpeed = 0.7;
+        c.panSpeed = 0.8;
+        // Allow tilting from near-top-down to a low skyline angle (not under ground)
+        c.minPolarAngle = 0.12;
+        c.maxPolarAngle = 1.45;
+        c.minDistance = 30;
+        c.maxDistance = 900;
+        this.bPolarAdj = false;
+    }
+
+    // Re-locks controls (used by the guided tour camera which drives the camera itself).
+    public enableLocked(): void {
+        if (this.bUseCC) return;
+        const c = this.controls as OrbitControls;
+        const pa = c.getPolarAngle();
+        c.minPolarAngle = pa;
+        c.maxPolarAngle = pa;
+        c.enableZoom = false;
+        c.enabled = false;
+        this.bPolarAdj = false;
+    }
 }

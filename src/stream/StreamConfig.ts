@@ -8,6 +8,7 @@ export interface StreamConfig {
   overlayEnabled: boolean;
   cameraDirectorEnabled: boolean;
   atmosphereEnabled: boolean;
+  cameraMode: 'manual' | 'tour';
 }
 
 const params = new URLSearchParams(window.location.search);
@@ -25,4 +26,8 @@ export const streamConfig: StreamConfig = {
   overlayEnabled: params.get('overlay') !== '0',
   cameraDirectorEnabled: params.get('camera') !== '0',
   atmosphereEnabled: params.get('atmosphere') !== '0',
+  // Camera mode: manual free-look by default for now.
+  //   ?camera=tour   → guided cinematic city tour
+  //   ?camera=manual → free orbit/zoom/pan (default)
+  cameraMode: (params.get('camera') === 'tour') ? 'tour' : 'manual',
 };

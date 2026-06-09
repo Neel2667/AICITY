@@ -58,6 +58,31 @@ setTimeout(() => {
   console.log('[AICITY] Phase 5 subsystems spawned');
 }, 600);
 
+// ─── Camera mode hint + toggle ────────────────────────────────────────────────
+// Manual is the default for now. Press "M" or click the badge to toggle the
+// guided cinematic tour on/off at runtime.
+const camHint = document.createElement('div');
+camHint.id = 'cameraHint';
+camHint.style.cssText =
+  'position:fixed;left:50%;bottom:64px;transform:translateX(-50%);z-index:200;' +
+  'pointer-events:auto;cursor:pointer;font:600 12px system-ui,sans-serif;' +
+  'color:#fff7e8;background:rgba(8,12,28,0.6);border:1px solid rgba(255,255,255,0.16);' +
+  'border-radius:999px;padding:7px 16px;backdrop-filter:blur(12px);user-select:none;';
+function renderCamHint() {
+  const td = sceneManager.getTourCamera();
+  camHint.textContent = td
+    ? '🎬 Guided Tour — drag to take manual control · press M'
+    : '🖱️ Manual camera — drag to rotate · scroll to zoom · right-drag to pan · press M for tour';
+}
+function toggleCameraMode() {
+  sceneManager.toggleCameraMode();
+  renderCamHint();
+}
+camHint.addEventListener('click', toggleCameraMode);
+window.addEventListener('keydown', (e) => { if (e.key === 'm' || e.key === 'M') toggleCameraMode(); });
+document.body.appendChild(camHint);
+setTimeout(renderCamHint, 800);
+
 // ─── Chat bot + server sync ───────────────────────────────────────────────────
 if (streamConfig.streamMode) chatBot.connect();
 

@@ -11,15 +11,16 @@ export interface WeatherSnapshot {
 }
 
 export function getWeatherFor(clock: CityClockSnapshot): WeatherSnapshot {
+  // M3: Enhanced weather for better stream experience
   const pattern = clock.dayNumber % 8;
 
   if (clock.phase === 'dawn' && (pattern === 1 || pattern === 4 || pattern === 7)) {
     return {
       kind: 'Morning Fog',
       icon: '🌫️',
-      description: 'soft fog over the avenues',
-      fogBoost: 0.45,
-      lightMultiplier: 0.9,
+      description: 'soft fog over the harbor',
+      fogBoost: 0.55,
+      lightMultiplier: 0.85,
     };
   }
 
@@ -27,9 +28,9 @@ export function getWeatherFor(clock: CityClockSnapshot): WeatherSnapshot {
     return {
       kind: 'Cloudy',
       icon: '☁️',
-      description: 'clouds drifting across downtown',
-      fogBoost: 0.18,
-      lightMultiplier: 0.82,
+      description: 'clouds over Harbor’s End',
+      fogBoost: 0.22,
+      lightMultiplier: 0.78,
     };
   }
 
@@ -37,16 +38,16 @@ export function getWeatherFor(clock: CityClockSnapshot): WeatherSnapshot {
     return {
       kind: 'Light Rain',
       icon: '🌧️',
-      description: 'a light shower passing through',
-      fogBoost: 0.28,
-      lightMultiplier: 0.74,
+      description: 'gentle rain on the waterfront',
+      fogBoost: 0.35,
+      lightMultiplier: 0.7,
     };
   }
 
   return {
     kind: 'Clear',
     icon: '✨',
-    description: 'calm skies over the city',
+    description: 'clear skies over the city',
     fogBoost: 0,
     lightMultiplier: 1,
   };

@@ -1,86 +1,54 @@
 /**
- * CityDesign.ts — THE MAP IS THE MAIN CHARACTER
- * ----------------------------------------------------------------------------
- * Single source of truth for AICITY's *finite, authored, memorable* city.
+ * CityDesign.ts — THE MAP IS THE MAIN CHARACTER  (v2 — 24×24)
+ * Single source of truth for AICITY's finite, authored, memorable city.
  *
- * Unlike the old infinite procedural engine, this is a hand-designed, fixed
- * layout. Every tile has a permanent identity, so viewers can build a mental
- * map: "the airport is north, the beach is south, downtown is the centre,
- * the market is east." A real place you can give a tour of.
- *
- * Grid: GRID_W x GRID_H tiles. Tile (col x → EAST, row y → SOUTH).
- * World position of a tile centre = ((x - originX) * TILE, 0, (y - originY) * TILE).
- *
- * This module is pure data + helpers. No THREE imports — safe to use anywhere
- * (renderer, camera, overlay, pedestrians, traffic, server).
+ * Grid: 24 cols (x → EAST) × 24 rows (y → SOUTH).
+ * World pos of tile centre = ((x - ORIGIN_X) * TILE, 0, (y - ORIGIN_Y) * TILE).
  */
 
-// ─── Grid dimensions ─────────────────────────────────────────────────────────
-export const GRID_W = 16;
-export const GRID_H = 16;
-export const TILE   = 60;          // world units per tile (matches GVar.CHUNK_SIZE)
+export const GRID_W = 24;
+export const GRID_H = 24;
+export const TILE   = 60;
 
-// Centre the map on the world origin so the existing camera framing still works.
-export const ORIGIN_X = (GRID_W - 1) / 2;   // 7.5
-export const ORIGIN_Y = (GRID_H - 1) / 2;   // 7.5
+export const ORIGIN_X = (GRID_W - 1) / 2;
+export const ORIGIN_Y = (GRID_H - 1) / 2;
 
-/** World-space centre (x,z) of a tile. y is always ground level (0). */
 export function tileToWorld(tx: number, ty: number): { x: number; z: number } {
   return { x: (tx - ORIGIN_X) * TILE, z: (ty - ORIGIN_Y) * TILE };
 }
 
-// ─── Tile kinds ──────────────────────────────────────────────────────────────
-/**
- * Every tile is one of these. The renderer decides what geometry to build for
- * each kind. "Landmark" kinds get bespoke procedural meshes (LandmarkFactory);
- * the generic urban kinds reuse the existing baked InfiniTown blocks.
- */
 export type TileKind =
-  // ── Natural / edge (no city geometry; define the bounded world) ──
-  | 'ocean'        // water — the southern edge
-  | 'beachSand'    // sandy shore band
-  | 'field'        // grass / farmland — northern & side edges
-  | 'forest'       // tree backdrop edge
-  // ── Generic urban (reuse baked blocks) ──
-  | 'downtown'     // tall towers
-  | 'midtown'      // mid-rise mixed
-  | 'residential'  // houses / row houses
-  | 'village'      // small cottages, loose layout
-  | 'industrial'   // factories / depots
-  | 'park'         // greenery, plaza
-  | 'road'         // pure road/intersection tile
-  // ── Bespoke landmarks (procedural LandmarkFactory) ──
-  | 'airportRunway'
-  | 'airportTerminal'
-  | 'trainStation'
-  | 'trainTracks'
-  | 'marketSquare'
-  | 'townPlaza'
-  | 'promenade';   // seaside boardwalk between city and beach
+  | 'ocean' | 'beachSand' | 'field' | 'forest'
+  | 'downtown' | 'midtown' | 'residential' | 'village'
+  | 'industrial' | 'park' | 'road'
+  | 'marketSquare' | 'townPlaza' | 'promenade'
+  | 'trainTracks' | 'trainStation'
+  | 'airportRunway' | 'airportTerminal'
+  | 'construction';
 
-/** Districts/zones a viewer should learn by name. */
 export interface Zone {
   id: string;
   name: string;
-  blurb: string;        // one-line description for overlay / bot
-  color: string;        // minimap / label accent
-  /** Approx centre tile, used for camera tour + labels. */
+  blurb: string;
+  color: string;
   centerTile: [number, number];
 }
 
 export const ZONES: Zone[] = [
-  { id: 'airport',   name: 'Skyhaven Airport',    blurb: 'Runway, terminal, and the city gateway',     color: '#90caf9', centerTile: [2, 1] },
-  { id: 'village',   name: 'Maple Village',       blurb: 'Cottages, lanes, and quiet fields',          color: '#a5d6a7', centerTile: [12, 1] },
-  { id: 'industrial',name: 'Ironworks Yard',      blurb: 'Factories, depots, and freight',             color: '#bcaaa4', centerTile: [2, 5] },
-  { id: 'station',   name: 'Central Station',      blurb: 'The beating heart hub — all lines meet here', color: '#ce93d8', centerTile: [9, 5] },
-  { id: 'downtown',  name: 'Downtown',            blurb: 'Glass towers and City Hall plaza',           color: '#4fc3f7', centerTile: [3, 8] },
-  { id: 'market',    name: 'Old Market',          blurb: 'Stalls, awnings, and street food',           color: '#ffcc80', centerTile: [12, 8] },
-  { id: 'midtown',   name: 'Midtown',             blurb: 'Cafes, shops, and mid-rise living',          color: '#fff59d', centerTile: [9, 10] },
-  { id: 'park',      name: 'Greenway Park',       blurb: 'Lawns, ponds, and weekend crowds',           color: '#c8e6c9', centerTile: [13, 11] },
-  { id: 'seaside',   name: 'Seaside Promenade',   blurb: 'Boardwalk, palms, and the beach',            color: '#ffe082', centerTile: [7, 13] },
+  { id: 'industrial',  name: 'Ironworks Yard',      blurb: 'Factories, depots, and the city\'s industrial backbone', color: '#bcaaa4', centerTile: [3,  4]  },
+  { id: 'downtown',    name: 'Downtown',             blurb: 'Glass towers, City Hall plaza, and the beating heart',   color: '#4fc3f7', centerTile: [6,  9]  },
+  { id: 'midtown',     name: 'Midtown',              blurb: 'Cafes, shops, and mid-rise city living',                 color: '#fff59d', centerTile: [11, 10] },
+  { id: 'market',      name: 'Old Market',           blurb: 'Colourful stalls, street food, and weekend bustle',      color: '#ffcc80', centerTile: [18, 9]  },
+  { id: 'residential', name: 'Maple Quarter',        blurb: 'Quiet streets, suburban houses, and tree-lined lanes',   color: '#a5d6a7', centerTile: [5,  14] },
+  { id: 'park',        name: 'Greenway Park',        blurb: 'Lawns, ponds, joggers, and the city\'s green lungs',    color: '#c8e6c9', centerTile: [16, 13] },
+  { id: 'seaside',     name: 'Seaside Promenade',    blurb: 'Boardwalk, palms, beach, and glittering ocean',         color: '#ffe082', centerTile: [11, 20] },
+  { id: 'airport',     name: 'Skyhaven Airport',     blurb: 'Under construction — the city\'s future gateway',       color: '#90caf9', centerTile: [4,  1]  },
+  { id: 'station',     name: 'Central Station',      blurb: 'Under construction — the future transit hub',           color: '#ce93d8', centerTile: [11, 6]  },
+  { id: 'university',  name: 'Westfield University', blurb: 'Coming soon — campus and knowledge district',           color: '#f48fb1', centerTile: [20, 3]  },
+  { id: 'hospital',    name: 'City Hospital',        blurb: 'Coming soon — medical district',                        color: '#80cbc4', centerTile: [11, 4]  },
+  { id: 'stadium',     name: 'Arena District',       blurb: 'Coming soon — sports and events',                       color: '#ffab91', centerTile: [19, 5]  },
 ];
 
-/** Named landmarks placed at specific tiles (for camera focus + signage). */
 export interface DesignLandmark {
   name: string;
   tile: [number, number];
@@ -90,72 +58,68 @@ export interface DesignLandmark {
 }
 
 export const LANDMARKS: DesignLandmark[] = [
-  { name: 'Skyhaven Airport',  tile: [2, 1],   zoneId: 'airport',    blurb: 'Watch the planes taxi at dawn',        icon: '✈️' },
-  { name: 'Central Station',   tile: [9, 5],   zoneId: 'station',     blurb: 'Trains every few minutes',             icon: '🚂' },
-  { name: 'City Hall Plaza',   tile: [3, 8],   zoneId: 'downtown',    blurb: 'The civic heart of the city',          icon: '🏛️' },
-  { name: 'Central Tower',     tile: [4, 8],   zoneId: 'downtown',    blurb: 'Tallest building in AICITY',           icon: '🏙️' },
-  { name: 'Old Market',        tile: [12, 8],  zoneId: 'market',      blurb: 'Best street food in town',             icon: '🛒' },
-  { name: 'Maple Village',     tile: [12, 1],  zoneId: 'village',     blurb: 'Cottages by the northern fields',      icon: '🏘️' },
-  { name: 'Ironworks Yard',    tile: [2, 5],   zoneId: 'industrial',  blurb: 'The city\u2019s industrial backbone',  icon: '🏭' },
-  { name: 'Greenway Park',     tile: [13, 11], zoneId: 'park',        blurb: 'The largest park in AICITY',           icon: '🌳' },
-  { name: 'Seaside Promenade', tile: [7, 13],  zoneId: 'seaside',     blurb: 'Sunset walks by the water',            icon: '🌴' },
-  { name: 'AICITY Beach',      tile: [7, 14],  zoneId: 'seaside',     blurb: 'Golden sand and gentle waves',         icon: '🏖️' },
+  { name: 'City Hall Plaza',       tile: [5,  9],  zoneId: 'downtown',    blurb: 'The civic heart of AICITY',              icon: '🏛️' },
+  { name: 'Central Tower',         tile: [7,  8],  zoneId: 'downtown',    blurb: 'Tallest building in the city',            icon: '🏙️' },
+  { name: 'Old Market',            tile: [18, 9],  zoneId: 'market',      blurb: 'Best street food in town',                icon: '🛒' },
+  { name: 'Ironworks Yard',        tile: [3,  4],  zoneId: 'industrial',  blurb: 'The industrial backbone',                 icon: '🏭' },
+  { name: 'Greenway Park',         tile: [16, 13], zoneId: 'park',        blurb: 'The largest park in AICITY',              icon: '🌳' },
+  { name: 'Seaside Promenade',     tile: [11, 20], zoneId: 'seaside',     blurb: 'Sunset walks and ocean views',            icon: '🌴' },
+  { name: 'AICITY Beach',          tile: [11, 21], zoneId: 'seaside',     blurb: 'Golden sand and gentle waves',            icon: '🏖️' },
+  { name: 'Maple Quarter',         tile: [5,  14], zoneId: 'residential', blurb: 'Quiet tree-lined streets',                icon: '🏘️' },
+  { name: 'Skyhaven Airport',      tile: [4,  1],  zoneId: 'airport',     blurb: 'Future gateway — under construction',     icon: '✈️' },
+  { name: 'Central Station',       tile: [11, 6],  zoneId: 'station',     blurb: 'Future transit hub — under construction', icon: '🚂' },
+  { name: 'Westfield University',  tile: [20, 3],  zoneId: 'university',  blurb: 'Coming soon',                             icon: '🎓' },
+  { name: 'City Hospital',         tile: [11, 4],  zoneId: 'hospital',    blurb: 'Coming soon',                             icon: '🏥' },
+  { name: 'Arena District',        tile: [19, 5],  zoneId: 'stadium',     blurb: 'Coming soon',                             icon: '🏟️' },
 ];
 
-// ─── Tile metadata ───────────────────────────────────────────────────────────
 export interface Tile {
   x: number;
   y: number;
   kind: TileKind;
   zoneId?: string;
-  /** 0..3 quarter-turn rotation for oriented pieces. */
   rot?: number;
-  /** Optional fixed name shown in-world / overlay. */
   name?: string;
 }
 
-/**
- * The authored layout, drawn as ASCII for human editing, then expanded to Tiles.
- * Legend (one char per tile):
- *   .  field          f  forest        ~  ocean         b  beachSand   p  promenade
- *   R  road           D  downtown      M  midtown       H  residential v  village
- *   I  industrial     G  park(green)   m  marketSquare  z  townPlaza
- *   A  airportRunway  T  airportTerminal
- *   S  trainStation   t  trainTracks
- *
- * 16 columns × 16 rows. Row 0 = NORTH, row 15 = SOUTH (ocean).
- */
+// 24 columns × 24 rows.  Row 0 = NORTH, Row 23 = SOUTH (ocean).
 const MAP_ASCII: string[] = [
-  // 0123456789012345   (x →)
-  'f..TAAAA..R.vvv.f',  // 0  airport terminal+runway (NW) | village (NE)
-  'f..TAAAA..R.vvv..',  // 1
-  '...R.....RRR.vv..',  // 2  approach road
-  'RRRRRRRRRRRRRRRRR',  // 3  main east-west avenue (north ring)
-  'I.I.R..ttttt..G.f',  // 4  industrial (W) | tracks approach station
-  'I.I.RR.tSSSt.RG.f',  // 5  Central Station hub (centre)
-  'I.I.R..ttttt.RG..',  // 6
-  'RRRRRRRRRRRRRRRRR',  // 7  central avenue
-  'DDz.R.M.R.Rmmm.G.',  // 8  downtown plaza (W) | market (E)
-  'DDD.R.MM..RmmmRG.',  // 9
-  '.DD.RRMMM.RR..RG.',  // 10 midtown
-  'HHH.R.MM.R.GGGGG.',  // 11 residential + park (E)
-  'HHH.RRRRRRR.GGGG.',  // 12
-  'pppppppppppppppp',   // 13 seaside promenade (full coast road)
-  'bbbbbbbbbbbbbbbbb',  // 14 beach sand band
-  '~~~~~~~~~~~~~~~~~',  // 15 ocean
+  'ffffffffffffffffffffffff', // 0  forest N edge
+  'ffCCCCCffffffffffffffCff', // 1  airport construction (NW) + university (NE)
+  'ffCCCCCfRRRRRRRRRRRRfCff', // 2  approach road + university fields
+  'fIIRIIIfR.....R....RfCff', // 3  industrial (W), hospital/university (E)
+  'fIIRIIIfRCCCCCR.CCCRffff', // 4  industrial + hospital + stadium construction
+  'fIIRIIIfRCCCCCRRCCCRffff', // 5  industrial + station + stadium
+  'RRRRRRRRRRRRRRRRRRRRRRRR', // 6  main N ring road
+  'f..R...f.R...R...R...fff', // 7  approach roads
+  'fDDRDDDz.R.MMM.R.mmm.fff', // 8  downtown + midtown + market
+  'fDDRDDDz.RRMMMRRR.mm.fff', // 9  downtown plaza + midtown + market
+  'fDDRDDD..RRMMMRRR.mm.fff', // 10 downtown south + midtown + market
+  'RRRRRRRRRRRRRRRRRRRRRRRR', // 11 S ring road
+  'f.HRH.f..R....R.GGGGG.ff', // 12 residential + park
+  'f.HRH.f..R....R.GGGGG.ff', // 13 residential + park
+  'f.HRH.f..RRRRRRRGGGGG.ff', // 14 residential + park connector
+  'f.HRH.f..R.....RGGGGG.ff', // 15 residential + park
+  'f.HRRRHRRR.....R.GGG..ff', // 16 residential south road
+  'f..H...H...R...R.....fff', // 17 residential south
+  'f......f...RRRRR.....fff', // 18 fields — promenade approach
+  'RRRRRRRRRRRRRRRRRRRRRRRR', // 19 coastal road
+  'pppppppppppppppppppppppp', // 20 promenade boardwalk
+  'bbbbbbbbbbbbbbbbbbbbbbbb', // 21 beach sand
+  '~~~~~~~~~~~~~~~~~~~~~~~~', // 22 ocean
+  '~~~~~~~~~~~~~~~~~~~~~~~~', // 23 ocean deep
 ];
 
-// Map ASCII char → TileKind
 const CHAR_KIND: Record<string, TileKind> = {
-  '.': 'field',      'f': 'forest',     '~': 'ocean',         'b': 'beachSand',  'p': 'promenade',
-  'R': 'road',       'D': 'downtown',   'M': 'midtown',       'H': 'residential','v': 'village',
-  'I': 'industrial', 'G': 'park',       'm': 'marketSquare',  'z': 'townPlaza',
+  '.': 'field',      'f': 'forest',     '~': 'ocean',       'b': 'beachSand',
+  'p': 'promenade',  'R': 'road',       'D': 'downtown',    'M': 'midtown',
+  'H': 'residential','I': 'industrial', 'G': 'park',        'm': 'marketSquare',
+  'z': 'townPlaza',  'C': 'construction',
   'A': 'airportRunway', 'T': 'airportTerminal',
   'S': 'trainStation',  't': 'trainTracks',
 };
 
-// Which zone a kind belongs to (for labels / pedestrians / traffic).
-function zoneForKind(kind: TileKind): string | undefined {
+function zoneForKind(kind: TileKind, x: number, y: number): string | undefined {
   switch (kind) {
     case 'airportRunway':
     case 'airportTerminal': return 'airport';
@@ -165,17 +129,26 @@ function zoneForKind(kind: TileKind): string | undefined {
     case 'downtown':
     case 'townPlaza':       return 'downtown';
     case 'midtown':         return 'midtown';
-    case 'residential':     return 'downtown';
+    case 'residential':     return 'residential';
     case 'village':         return 'village';
     case 'industrial':      return 'industrial';
     case 'park':            return 'park';
     case 'promenade':
     case 'beachSand':       return 'seaside';
-    default:                return undefined;
+    case 'construction': {
+      if (x <= 7  && y <= 3)  return 'airport';
+      if (x >= 18 && y <= 4)  return 'university';
+      if (x >= 8  && x <= 14 && y <= 5) {
+        if (y <= 4) return 'hospital';
+        return 'station';
+      }
+      if (x >= 15 && y >= 4 && y <= 6) return 'stadium';
+      return undefined;
+    }
+    default: return undefined;
   }
 }
 
-// ─── Build the tile table from ASCII ─────────────────────────────────────────
 function buildTiles(): Tile[][] {
   const grid: Tile[][] = [];
   for (let y = 0; y < GRID_H; y++) {
@@ -184,7 +157,7 @@ function buildTiles(): Tile[][] {
     for (let x = 0; x < GRID_W; x++) {
       const ch = rowStr[x] ?? '.';
       const kind = CHAR_KIND[ch] ?? 'field';
-      row.push({ x, y, kind, zoneId: zoneForKind(kind) });
+      row.push({ x, y, kind, zoneId: zoneForKind(kind, x, y) });
     }
     grid.push(row);
   }
@@ -193,18 +166,15 @@ function buildTiles(): Tile[][] {
 
 export const TILES: Tile[][] = buildTiles();
 
-/** Get a tile, or null if outside the finite map (the bounded edge). */
 export function getTile(x: number, y: number): Tile | null {
   if (x < 0 || y < 0 || x >= GRID_W || y >= GRID_H) return null;
   return TILES[y][x];
 }
 
-/** Is this coordinate inside the authored map? */
 export function inBounds(x: number, y: number): boolean {
   return x >= 0 && y >= 0 && x < GRID_W && y < GRID_H;
 }
 
-/** Lookup helpers used across the app. */
 export function getZone(id: string): Zone | undefined {
   return ZONES.find(z => z.id === id);
 }
@@ -213,7 +183,6 @@ export function landmarkAt(x: number, y: number): DesignLandmark | undefined {
   return LANDMARKS.find(l => l.tile[0] === x && l.tile[1] === y);
 }
 
-/** World-space pan limits (with a little margin) so the camera stays on the map. */
 export function worldBounds() {
   const half = TILE / 2;
   return {
@@ -224,21 +193,16 @@ export function worldBounds() {
   };
 }
 
-// ─── Street network helpers (for buses, pedestrians, traffic) ─────────────────
-
-/** Tile kinds that an agent can stand/walk/drive on. */
 const WALKABLE: Set<TileKind> = new Set([
   'road', 'marketSquare', 'townPlaza', 'promenade',
   'trainStation', 'airportTerminal',
 ]);
-const DRIVABLE: Set<TileKind> = new Set(['road']);
 
 export function isRoad(x: number, y: number): boolean {
   const t = getTile(x, y);
   return !!t && t.kind === 'road';
 }
 
-/** All road tile coordinates. */
 export function roadTiles(): Array<[number, number]> {
   const out: Array<[number, number]> = [];
   for (let y = 0; y < GRID_H; y++)
@@ -247,7 +211,6 @@ export function roadTiles(): Array<[number, number]> {
   return out;
 }
 
-/** Walkable tiles (roads + plazas + station + promenade) for pedestrian spawn. */
 export function walkableTiles(): Tile[] {
   const out: Tile[] = [];
   for (let y = 0; y < GRID_H; y++)
@@ -258,13 +221,9 @@ export function walkableTiles(): Tile[] {
 
 export function isDrivable(x: number, y: number): boolean {
   const t = getTile(x, y);
-  return !!t && DRIVABLE.has(t.kind);
+  return !!t && t.kind === 'road';
 }
 
-/**
- * Road intersection tiles: a road tile that has road neighbours on BOTH the
- * horizontal and vertical axes (a true crossroads). Used for traffic lights.
- */
 export function intersectionTiles(): Array<[number, number]> {
   const out: Array<[number, number]> = [];
   for (const [x, y] of roadTiles()) {
@@ -275,13 +234,12 @@ export function intersectionTiles(): Array<[number, number]> {
   return out;
 }
 
-/**
- * Convert a list of tile coords into a world-space waypoint path (y at ground).
- * Used to author bus routes directly from the map.
- */
-export function tilesToPath(tiles: Array<[number, number]>, y = 0.5): Array<{ x: number; y: number; z: number }> {
+export function tilesToPath(
+  tiles: Array<[number, number]>,
+  yLevel = 0.5,
+): Array<{ x: number; y: number; z: number }> {
   return tiles.map(([tx, ty]) => {
     const w = tileToWorld(tx, ty);
-    return { x: w.x, y, z: w.z };
+    return { x: w.x, y: yLevel, z: w.z };
   });
 }

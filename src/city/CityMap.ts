@@ -58,8 +58,8 @@ export const CITY_MAP: CityMapData = {
   cityName: 'AICITY Live',
   tagline: 'A little city that never sleeps.',
   foundingDay: 1,
-  population: 4200,
-  buildings: 81,
+  population: 8400,  // 24×24 city — larger population
+  buildings: 210,   // 24×24 city — more buildings
 
   districts: [
     { id: 'downtown',  name: 'Downtown Core',    mood: 'busy',        description: 'Glass towers and busy avenues',            color: '#4fc3f7' },

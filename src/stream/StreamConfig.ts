@@ -31,7 +31,7 @@ export const streamConfig: StreamConfig = {
   // Camera mode: manual free-look by default for now.
   //   ?camera=tour   → guided cinematic city tour
   //   ?camera=manual → free orbit/zoom/pan (default)
-  cameraMode: (params.get('camera') === 'tour') ? 'tour' : 'manual',
+  cameraMode: (params.get('camera') === 'manual') ? 'manual' : 'tour', // tour is default for 24/7 stream
   // Which pre-made city scene to load. ?scene=sf-street|rio|city-small|city-blocks
   citySceneId: params.get('scene') || 'rio',
   // Building style for the fixed city: ?buildings=kenney to use CC0 Kenney

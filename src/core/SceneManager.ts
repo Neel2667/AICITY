@@ -18,8 +18,9 @@ import type { WeatherSnapshot } from '../weather/WeatherState';
 import { streamConfig } from '../stream/StreamConfig';
 import { CameraDirector } from '../camera/CameraDirector';
 import { TourCamera } from '../camera/TourCamera';
-import { cityScene } from '../city/CityScene';
 import { kenneyBuildings, type KenneyGroup } from '../city/KenneyBuildings';
+import { CityBuilder } from '../city/CityBuilder';
+import { GRID_W, GRID_H, TILE } from '../city/CityDesign';
 //import TWEEN from 'three/examples/jsm/libs/tween.module.js'
 
 export class SceneManager {
@@ -51,7 +52,8 @@ export class SceneManager {
     // ─── Finite authored city (F1–F4) ──────────────────────────────────────────
     // When true, render the fixed, hand-authored, bounded city + guided tour
     // camera instead of the legacy infinite procedural treadmill.
-    protected useAuthoredCity: boolean = false;
+    protected useAuthoredCity: boolean = true;   // ← 24x24 authored city is now DEFAULT
+    protected cityBuilder: CityBuilder | null = null;
     protected cityRadius: number = 450;
     protected tourCamera: TourCamera | null = null;
 
@@ -145,30 +147,31 @@ export class SceneManager {
                 this._resizeShadowMapFrustum(window.innerWidth, window.innerHeight);
 
                 if (this.useAuthoredCity) {
-                    // ─── REAL ARTIST-DESIGNED CITY SCENE (not a tile grid) ─────────
-                    // Load one complete pre-made city model (irregular streets, varied
-                    // density) and frame the camera so the WHOLE city is visible.
-                    cityScene.load(streamConfig.citySceneId as any).then((loaded) => {
-                        this.scene.add(loaded.group);
-                        this.cityRadius = loaded.radius;
-                        this.frameCameraToCity(loaded.box);
-                        console.log('[AICITY] Real city scene loaded:', streamConfig.citySceneId, '· radius', Math.round(loaded.radius));
-                    }).catch((e) => console.error('[AICITY] city scene failed', e));
-
+                    // ─── 24×24 AUTHORED CITY (Kenney CC0 models, finite & real) ────
+                    this.cityBuilder = new CityBuilder();
                     this.scene.add(this.dirLight);
                     this.scene.add(this.dirLight.target);
+                    this.cameraDirector = null;
+                    this.smController = null;
 
-                    this.cameraDirector = null;          // disable legacy director
-                    this.smController = null;            // no infinite panning
+                    this.cityBuilder.preload().then(() => {
+                        const cityRoot = this.cityBuilder!.build();
+                        this.scene.add(cityRoot);
+                        const cityHW = (GRID_W * TILE) / 2;
+                        const cityHD = (GRID_H * TILE) / 2;
+                        const cityBox = new THREE.Box3(
+                            new THREE.Vector3(-cityHW, 0, -cityHD),
+                            new THREE.Vector3( cityHW, 80, cityHD),
+                        );
+                        this.frameCameraToCity(cityBox);
+                        this.cityRadius = Math.max(cityHW, cityHD);
+                        console.log(`[AICITY] 24x24 authored city built · ${GRID_W}x${GRID_H} tiles`);
+                    });
 
-                    if (streamConfig.cameraMode === 'tour') {
-                        this.tourCamera = new TourCamera(this.cameraController);
-                        console.log('[AICITY] Guided tour camera active');
-                    } else {
-                        this.tourCamera = null;
-                        this.cameraController.enableManual();
-                        console.log('[AICITY] Manual camera active (drag/scroll/WASD). Add ?camera=tour for the guided tour.');
-                    }
+                    // Always use the guided multi-mode tour camera for 24/7 stream.
+                    // Press M or click the badge to toggle manual.
+                    this.tourCamera = new TourCamera(this.cameraController);
+                    console.log('[AICITY] Guided cinematic camera active (M = toggle manual)');
 
                     this.initKeyEvent();
                     this.bInited = true;

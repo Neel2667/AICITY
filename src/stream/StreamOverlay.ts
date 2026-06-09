@@ -46,7 +46,7 @@ export class StreamOverlay {
     status.appendChild(this.weatherEl);
 
     this.tickerEl = document.createElement('div');
-    this.tickerEl.className = 'stream-ticker'; // M3: Ticker active for stream
+    this.tickerEl.className = 'stream-ticker'; // M3: Ticker fully active for stream
 
     this.root.appendChild(brand);
     this.root.appendChild(status);

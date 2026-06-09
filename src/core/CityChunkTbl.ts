@@ -334,6 +334,24 @@ export class CityChunkTbl {
      * 生成城市块表格
      */
     private _generate(): void {
+        // Fixed city mode - only generate chunks from citymap.json
+        if (this.isFixedCity && this.cityMap && this.cityMap.chunks && this.cityMap.chunks.length > 0) {
+            this.cityMap.chunks.forEach((mapChunk: any) => {
+                const x = mapChunk.x;
+                const y = mapChunk.y;
+                
+                if (!this.chunks[x]) this.chunks[x] = [];
+                
+                const chunkObj = this._genChunkFromMap(x, y, mapChunk);
+                chunkObj.tableX = x;
+                chunkObj.tableY = y;
+                this.chunks[x][y] = { node: chunkObj, tableX: x, tableY: y };
+            });
+            console.log('[CityChunkTbl] Generated fixed city from map with', this.cityMap.chunks.length, 'chunks');
+            return;
+        }
+
+        // Fallback random generation
         for (let y = 0; y < GVar.TABLE_SIZE; y++) {
             for (let x = 0; x < GVar.TABLE_SIZE; x++) {
                 if (!this.chunks[x]) {

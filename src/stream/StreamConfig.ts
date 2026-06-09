@@ -9,6 +9,7 @@ export interface StreamConfig {
   cameraDirectorEnabled: boolean;
   atmosphereEnabled: boolean;
   cameraMode: 'manual' | 'tour';
+  citySceneId: string;
 }
 
 const params = new URLSearchParams(window.location.search);
@@ -30,4 +31,6 @@ export const streamConfig: StreamConfig = {
   //   ?camera=tour   → guided cinematic city tour
   //   ?camera=manual → free orbit/zoom/pan (default)
   cameraMode: (params.get('camera') === 'tour') ? 'tour' : 'manual',
+  // Which pre-made city scene to load. ?scene=sf-street|rio|city-small|city-blocks
+  citySceneId: params.get('scene') || 'sf-street',
 };

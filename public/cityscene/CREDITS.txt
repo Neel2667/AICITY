@@ -1,0 +1,6 @@
+City scene models (CC-BY, Creative Commons Attribution):
+- sf-street.glb  "SF Street" by Alan Zimmerman (poly.pizza/m/cnTMgkFoTS0)
+- rio.glb        "Rio de Janeiro" by Alan Zimmerman (poly.pizza/m/2binsxeOBve)
+- city-small.glb by poly.pizza creator (poly.pizza/m/5deJc9xvuzn)
+- city-blocks.glb by poly.pizza creator (poly.pizza/m/1BFCYNej8YT)
+Attribution required: credit the author(s) in your video description.

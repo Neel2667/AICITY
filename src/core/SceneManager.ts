@@ -17,9 +17,8 @@ import type { CityClockSnapshot } from '../stream/CityClock';
 import type { WeatherSnapshot } from '../weather/WeatherState';
 import { streamConfig } from '../stream/StreamConfig';
 import { CameraDirector } from '../camera/CameraDirector';
-import { CityBuilder } from '../city/CityBuilder';
 import { TourCamera } from '../camera/TourCamera';
-import { worldBounds } from '../city/CityDesign';
+import { cityScene } from '../city/CityScene';
 //import TWEEN from 'three/examples/jsm/libs/tween.module.js'
 
 export class SceneManager {
@@ -52,7 +51,7 @@ export class SceneManager {
     // When true, render the fixed, hand-authored, bounded city + guided tour
     // camera instead of the legacy infinite procedural treadmill.
     protected useAuthoredCity: boolean = true;
-    protected cityBuilder: CityBuilder | null = null;
+    protected cityRadius: number = 450;
     protected tourCamera: TourCamera | null = null;
 
     protected resizeHandler: any = null;
@@ -145,14 +144,19 @@ export class SceneManager {
                 this._resizeShadowMapFrustum(window.innerWidth, window.innerHeight);
 
                 if (this.useAuthoredCity) {
-                    // ─── FINITE AUTHORED CITY (real, tourable place) ───────────────
-                    this.cityBuilder = new CityBuilder();
-                    // Preload CC0 glTF models, then build the city from real assets.
-                    this.cityBuilder.preload().then(() => {
-                        const cityGroup = this.cityBuilder!.build();
-                        this.scene.add(cityGroup);
-                        console.log('[AICITY] Finite authored city built from CC0 models');
-                    });
+                    // ─── REAL ARTIST-DESIGNED CITY SCENE (not a tile grid) ─────────
+                    // Load one complete pre-made city model (irregular streets, varied
+                    // density) and fly the camera around it.
+                    cityScene.load(streamConfig.citySceneId as any).then((loaded) => {
+                        this.scene.add(loaded.group);
+                        this.cityRadius = loaded.radius;
+                        // frame the camera to the loaded city size
+                        const r = Math.max(120, loaded.radius);
+                        this.cameraController.camera.position.set(r * 0.9, r * 0.8, r * 0.9);
+                        this.cameraController.getLookAtTarget().set(0, 0, 0);
+                        console.log('[AICITY] Real city scene loaded:', streamConfig.citySceneId);
+                    }).catch((e) => console.error('[AICITY] city scene failed', e));
+
                     this.scene.add(this.dirLight);
                     this.scene.add(this.dirLight.target);
 
@@ -160,17 +164,14 @@ export class SceneManager {
                     this.smController = null;            // no infinite panning
 
                     if (streamConfig.cameraMode === 'tour') {
-                        // Guided cinematic tour camera drives everything.
                         this.tourCamera = new TourCamera(this.cameraController);
-                        this.cameraController.setCameraHeight(70);
                         console.log('[AICITY] Guided tour camera active');
                     } else {
-                        // Manual free-look: user controls orbit/zoom/pan.
                         this.tourCamera = null;
-                        this.cameraController.camera.position.set(180, 160, 180);
+                        this.cameraController.camera.position.set(400, 360, 400);
                         this.cameraController.getLookAtTarget().set(0, 0, 0);
                         this.cameraController.enableManual();
-                        console.log('[AICITY] Manual camera active (orbit/zoom/pan). Add ?camera=tour for the guided tour.');
+                        console.log('[AICITY] Manual camera active (drag/scroll/WASD). Add ?camera=tour for the guided tour.');
                     }
 
                     this.initKeyEvent();
@@ -490,15 +491,12 @@ export class SceneManager {
         }
     }
 
-    /** Keep the camera + look-at target inside the finite map bounds. */
-    protected clampCameraToMap(): void {
-        const b = worldBounds();
-        const cam = this.cameraController.camera;
-        cam.position.x = Math.min(b.maxX + 120, Math.max(b.minX - 120, cam.position.x));
-        cam.position.z = Math.min(b.maxZ + 120, Math.max(b.minZ - 120, cam.position.z));
+    /** Keep the look-at target loosely within the city radius. */
+    protected clampTargetToCity(margin = 1.2): void {
+        const r = this.cityRadius * margin;
         const tgt = this.cameraController.getLookAtTarget();
-        tgt.x = Math.min(b.maxX, Math.max(b.minX, tgt.x));
-        tgt.z = Math.min(b.maxZ, Math.max(b.minZ, tgt.z));
+        tgt.x = Math.min(r, Math.max(-r, tgt.x));
+        tgt.z = Math.min(r, Math.max(-r, tgt.z));
     }
 
         public update(clockSnapshot?: CityClockSnapshot, weatherSnapshot?: WeatherSnapshot): void {
@@ -518,20 +516,12 @@ export class SceneManager {
 
         if (this.useAuthoredCity) {
             if (this.tourCamera) {
-                // Guided cinematic tour drives the camera.
                 this.tourCamera.update({ delta: delta, elapsed: elapsed }, clockSnapshot);
                 this.cameraController.update();
-                this.clampCameraToMap();
             } else {
-                // Manual free-look: OrbitControls + WASD drive the camera. Keep the
-                // look-at target loosely near the map (generous margin) so you can
-                // roam freely without snapping back.
+                // Manual free-look: OrbitControls + WASD drive the camera.
                 this.cameraController.update();
-                const b = worldBounds();
-                const m = 200;
-                const tgt = this.cameraController.getLookAtTarget();
-                tgt.x = Math.min(b.maxX + m, Math.max(b.minX - m, tgt.x));
-                tgt.z = Math.min(b.maxZ + m, Math.max(b.minZ - m, tgt.z));
+                this.clampTargetToCity(1.6);
             }
         } else {
             // ─── legacy infinite engine path ───

@@ -48,15 +48,12 @@ setTimeout(() => {
   if (canvas) clipRecorder.setCanvas(canvas);
 }, 600);
 
-// Spawn all subsystems after asset load (brief defer)
-setTimeout(() => {
-  busManager.spawn();
-  pedManager.spawnInitial();
-  trafficLights.spawn(); // placed at real road intersections
-  citySignage.build();   // floating landmark labels
-  landmarkLife.build();  // train, plane, boats
-  console.log('[AICITY] Phase 5 subsystems spawned');
-}, 600);
+// NOTE: pedestrians / buses / traffic lights / signage / landmark-life were
+// authored against the OLD CityDesign tile grid. We now load a complete
+// artist-designed city scene instead, so those grid-aligned systems are
+// disabled for now (they'd float disconnected from the new layout). They can
+// be re-pointed at the new scene later. Kept imported to avoid churn.
+void busManager; void pedManager; void trafficLights; void citySignage; void landmarkLife; void updateWater;
 
 // ─── Camera mode hint + toggle ────────────────────────────────────────────────
 // Manual is the default for now. Press "M" or click the badge to toggle the
@@ -205,13 +202,9 @@ function animate() {
 
   const ud = sceneManager.getLastUpdate();
   if (ud) {
-    busManager.update(ud, clockSnapshot);
-    pedManager.update(ud, clockSnapshot);
+    // Grid-aligned city life is disabled while we use the artist city scene.
+    // Fireworks still work (sky effect, position-independent).
     fireworks.update(ud);
-    trafficLights.update(ud);
-    citySignage.update(ud);
-    landmarkLife.update(ud);
-    updateWater(ud.elapsed);
   }
 
   sceneManager.update(clockSnapshot, weatherSnapshot);

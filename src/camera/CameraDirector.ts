@@ -27,8 +27,8 @@ export class CameraDirector {
 
     const scenicBias = clock && (clock.phase === 'dawn' || clock.phase === 'dusk') ? 1.2 : 0;
     const nightBias = clock && clock.phase === 'night' ? 1 : 0;
-    const radius = 170 + scenicBias * 40 + Math.sin(update.elapsed * 0.025) * 25;
-    const height = 110 + scenicBias * 45 - nightBias * 25 + Math.sin(update.elapsed * 0.018) * 16;
+    const radius = 175 + scenicBias * 42 + Math.sin(update.elapsed * 0.025) * 28;
+    const height = 112 + scenicBias * 48 - nightBias * 28 + Math.sin(update.elapsed * 0.018) * 18;
 
     this.orbitAngle += update.delta * (0.009 + scenicBias * 0.014); // M3: Even more cinematic
 

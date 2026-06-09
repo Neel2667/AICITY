@@ -447,8 +447,12 @@ export class SceneManager {
         if (this.dirLight && clockSnapshot) {
             const time = clockSnapshot.timeOfDay;
             if (time > 0.7 && time < 0.85) {
-                // Sunset enhancement
-                this.dirLight.intensity = Math.max(this.dirLight.intensity, 0.6);
+                // Sunset enhancement (M3)
+                this.dirLight.intensity = Math.max(this.dirLight.intensity, 0.65);
+            }
+            if (time > 0.2 && time < 0.3) {
+                // Dawn enhancement
+                this.dirLight.intensity = Math.max(this.dirLight.intensity, 0.55);
             }
         }
 

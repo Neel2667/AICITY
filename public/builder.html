@@ -7,22 +7,25 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#1a1a2e;color:#e0e0e0;font-family:system-ui,sans-serif;height:100vh;overflow:hidden;display:flex;flex-direction:column}
-#topbar{display:flex;align-items:center;gap:8px;padding:7px 10px;background:#12122a;border-bottom:2px solid #2d2d5a;flex-shrink:0;flex-wrap:wrap}
+#topbar{display:flex;align-items:center;gap:7px;padding:6px 10px;background:#12122a;border-bottom:2px solid #2d2d5a;flex-shrink:0;flex-wrap:wrap}
 #topbar h1{font-size:14px;font-weight:700;color:#7eb8f7;white-space:nowrap}
-.tb-sep{width:1px;height:22px;background:#2d2d5a;flex-shrink:0}
+.tb-sep{width:1px;height:20px;background:#2d2d5a;flex-shrink:0}
 .tb-btn{padding:4px 10px;border-radius:5px;border:1px solid #3a3a6a;background:#22224a;color:#e0e0e0;cursor:pointer;font-size:11px;font-weight:600;transition:background .15s;white-space:nowrap}
 .tb-btn:hover{background:#3a3a7a}
 .tb-btn.active{background:#1565c0;border-color:#42a5f5;color:#fff}
 .tb-btn.green{background:#2e7d32;border-color:#66bb6a}
 .tb-btn.green:hover{background:#388e3c}
-.tb-btn.red{background:#b71c1c;border-color:#ef5350}
-#rot-display{padding:4px 12px;border-radius:5px;border:1px solid #42a5f5;background:#0d2444;color:#42a5f5;font-size:11px;font-weight:700;white-space:nowrap}
-#status{font-size:10px;color:#546e7a;margin-left:auto;white-space:nowrap}
-#tile-count{font-size:10px;color:#78909c}
+.tb-btn.purple{background:#4a148c;border-color:#ab47bc}
+.tb-btn.purple.active{background:#7b1fa2;border-color:#ce93d8}
+#rot-display{padding:4px 10px;border-radius:5px;border:1px solid #42a5f5;background:#0d2444;color:#42a5f5;font-size:11px;font-weight:700;white-space:nowrap}
+#overlay-slider{width:80px;accent-color:#ab47bc;cursor:pointer}
+#tile-count{font-size:10px;color:#78909c;white-space:nowrap}
+#status{font-size:10px;color:#37474f;margin-left:auto;white-space:nowrap}
 #main{display:flex;flex:1;overflow:hidden}
-#palette{width:200px;flex-shrink:0;background:#12122a;border-right:2px solid #2d2d5a;display:flex;flex-direction:column;overflow:hidden}
+/* PALETTE */
+#palette{width:195px;flex-shrink:0;background:#12122a;border-right:2px solid #2d2d5a;display:flex;flex-direction:column;overflow:hidden}
 #pal-tabs{display:flex;flex-shrink:0;border-bottom:1px solid #2d2d5a}
-.pal-tab{flex:1;padding:6px 2px;text-align:center;font-size:10px;font-weight:700;cursor:pointer;background:#1a1a3a;color:#546e7a;transition:all .15s}
+.pal-tab{flex:1;padding:5px 2px;text-align:center;font-size:10px;font-weight:700;cursor:pointer;background:#1a1a3a;color:#546e7a;transition:all .15s}
 .pal-tab.active{background:#12122a;border-bottom:2px solid #7eb8f7;color:#7eb8f7}
 #pal-search{padding:5px;flex-shrink:0}
 #pal-search input{width:100%;padding:4px 7px;border-radius:4px;border:1px solid #3a3a6a;background:#1a1a3a;color:#e0e0e0;font-size:10px;outline:none}
@@ -36,22 +39,27 @@ body{background:#1a1a2e;color:#e0e0e0;font-family:system-ui,sans-serif;height:10
 .pal-icon{width:26px;height:26px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
 .pal-label{font-size:9px;color:#90a4ae;line-height:1.25;overflow:hidden}
 .pal-label strong{display:block;color:#cfd8dc;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;overflow:auto;background:#0d0d1f;position:relative}
-#grid-canvas{cursor:crosshair;image-rendering:pixelated;image-rendering:crisp-edges}
-#infopanel{width:160px;flex-shrink:0;background:#12122a;border-left:2px solid #2d2d5a;padding:10px;overflow-y:auto;font-size:10px}
+/* CANVAS */
+#canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;overflow:auto;background:#0a0a1a;position:relative}
+#canvas-container{position:relative;flex-shrink:0}
+#ref-canvas{position:absolute;top:0;left:0;pointer-events:none;image-rendering:pixelated}
+#grid-canvas{position:relative;z-index:2;cursor:crosshair;image-rendering:pixelated;image-rendering:crisp-edges}
+/* INFO PANEL */
+#infopanel{width:155px;flex-shrink:0;background:#12122a;border-left:2px solid #2d2d5a;padding:10px;overflow-y:auto;font-size:10px}
 #infopanel h3{font-size:11px;font-weight:700;color:#7eb8f7;margin-bottom:8px}
 .info-row{margin-bottom:6px}
 .info-row label{color:#546e7a;display:block;margin-bottom:1px;font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase}
 .info-row span{color:#cfd8dc;font-size:10px;word-break:break-all}
-#tile-preview{width:100%;aspect-ratio:1;border-radius:6px;border:1px solid #2d2d5a;display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:8px;background:#1a1a3a}
-.legend{margin-top:12px}
-.legend h4{font-size:9px;font-weight:700;color:#546e7a;margin-bottom:5px;letter-spacing:.4px;text-transform:uppercase}
+#tile-preview{width:100%;aspect-ratio:1;border-radius:6px;border:1px solid #2d2d5a;display:flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:8px;background:#1a1a3a}
+.legend{margin-top:10px}
+.legend h4{font-size:9px;font-weight:700;color:#546e7a;margin-bottom:4px;letter-spacing:.4px;text-transform:uppercase}
 .leg-row{display:flex;align-items:center;gap:5px;margin-bottom:3px}
 .leg-swatch{width:10px;height:10px;border-radius:2px;flex-shrink:0}
 .leg-label{font-size:9px;color:#78909c}
+/* TOAST */
 #toast{position:fixed;bottom:16px;right:16px;padding:8px 16px;background:#1b5e20;border:1px solid #43a047;border-radius:6px;color:#fff;font-size:11px;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999}
 #toast.show{opacity:1}
-#shortcuts{position:fixed;bottom:16px;left:210px;font-size:9px;color:#37474f;pointer-events:none}
+#shortcuts{position:fixed;bottom:5px;left:200px;font-size:9px;color:#2a2a4a;pointer-events:none;z-index:1}
 </style>
 </head>
 <body>
@@ -71,15 +79,21 @@ body{background:#1a1a2e;color:#e0e0e0;font-family:system-ui,sans-serif;height:10
   <div class="tb-sep"></div>
   <button class="tb-btn" id="btn-clear">✕ Clear All</button>
   <div class="tb-sep"></div>
+  <!-- REFERENCE MAP OVERLAY CONTROLS -->
+  <button class="tb-btn purple" id="btn-overlay">🗺️ Reference ON</button>
+  <label style="font-size:10px;color:#ab47bc;white-space:nowrap">Opacity:</label>
+  <input type="range" id="overlay-slider" min="0" max="100" value="45"/>
+  <div class="tb-sep"></div>
   <button class="tb-btn green" id="btn-save">💾 Save JSON</button>
   <button class="tb-btn" id="btn-load">📂 Load JSON</button>
   <input type="file" id="file-input" accept=".json" style="display:none"/>
   <div class="tb-sep"></div>
   <span id="tile-count">0 tiles</span>
-  <span id="status">← Pick a tile from the palette, then click the grid</span>
+  <span id="status">← Pick a tile, then click/drag the grid • R=rotate</span>
 </div>
 
 <div id="main">
+  <!-- PALETTE -->
   <div id="palette">
     <div id="pal-tabs">
       <div class="pal-tab active" data-tab="roads">🛣️ Road</div>
@@ -91,10 +105,15 @@ body{background:#1a1a2e;color:#e0e0e0;font-family:system-ui,sans-serif;height:10
     <div id="pal-list"></div>
   </div>
 
+  <!-- CANVAS AREA -->
   <div id="canvas-wrap">
-    <canvas id="grid-canvas"></canvas>
+    <div id="canvas-container">
+      <canvas id="ref-canvas"></canvas>
+      <canvas id="grid-canvas"></canvas>
+    </div>
   </div>
 
+  <!-- INFO PANEL -->
   <div id="infopanel">
     <div id="tile-preview">·</div>
     <h3>Tile Info</h3>
@@ -110,8 +129,8 @@ body{background:#1a1a2e;color:#e0e0e0;font-family:system-ui,sans-serif;height:10
       <div class="leg-row"><div class="leg-swatch" style="background:#2a4a6a"></div><div class="leg-label">Midtown</div></div>
       <div class="leg-row"><div class="leg-swatch" style="background:#2e5a1e"></div><div class="leg-label">Residential</div></div>
       <div class="leg-row"><div class="leg-swatch" style="background:#5d3a1a"></div><div class="leg-label">Industrial</div></div>
-      <div class="leg-row"><div class="leg-swatch" style="background:#1b5e20"></div><div class="leg-label">Park</div></div>
-      <div class="leg-row"><div class="leg-swatch" style="background:#1b5e20" style="opacity:.6"></div><div class="leg-label">Forest</div></div>
+      <div class="leg-row"><div class="leg-swatch" style="background:#2e7d32"></div><div class="leg-label">Park</div></div>
+      <div class="leg-row"><div class="leg-swatch" style="background:#1b5e20"></div><div class="leg-label">Forest</div></div>
       <div class="leg-row"><div class="leg-swatch" style="background:#8d6e1a"></div><div class="leg-label">Market</div></div>
       <div class="leg-row"><div class="leg-swatch" style="background:#f57f17"></div><div class="leg-label">Beach</div></div>
       <div class="leg-row"><div class="leg-swatch" style="background:#0d47a1"></div><div class="leg-label">Ocean</div></div>
@@ -121,48 +140,48 @@ body{background:#1a1a2e;color:#e0e0e0;font-family:system-ui,sans-serif;height:10
 </div>
 
 <div id="toast"></div>
-<div id="shortcuts">R=rotate · D=draw · E=erase · F=fill · Ctrl+Z=undo · Ctrl+S=save · Right-click=erase</div>
+<div id="shortcuts">R=rotate · D=draw · E=erase · F=fill · Ctrl+Z=undo · Ctrl+Y=redo · Ctrl+S=save · Right-click=erase</div>
 
 <script>
 // ── PALETTE DATA ──────────────────────────────────────────────────────────────
 const PALETTE = {
   roads:[
     {section:'STRAIGHT'},
-    {id:'rs-ns', label:'Straight N↕S',  icon:'║',rot:0,cat:'road',color:'#4a5055',model:'road-straight',folder:'roads'},
-    {id:'rs-ew', label:'Straight E↔W',  icon:'═',rot:1,cat:'road',color:'#4a5055',model:'road-straight',folder:'roads'},
+    {id:'rs-ns',label:'Straight N↕S', icon:'║',rot:0,cat:'road',color:'#4a5055',model:'road-straight',folder:'roads'},
+    {id:'rs-ew',label:'Straight E↔W', icon:'═',rot:1,cat:'road',color:'#4a5055',model:'road-straight',folder:'roads'},
     {section:'CORNERS'},
-    {id:'rb-sw', label:'Corner SW ╚',   icon:'╚',rot:0,cat:'road',color:'#4a5055',model:'road-bend',folder:'roads'},
-    {id:'rb-nw', label:'Corner NW ╔',   icon:'╔',rot:1,cat:'road',color:'#4a5055',model:'road-bend',folder:'roads'},
-    {id:'rb-ne', label:'Corner NE ╗',   icon:'╗',rot:2,cat:'road',color:'#4a5055',model:'road-bend',folder:'roads'},
-    {id:'rb-se', label:'Corner SE ╝',   icon:'╝',rot:3,cat:'road',color:'#4a5055',model:'road-bend',folder:'roads'},
+    {id:'rb-sw',label:'Corner SW ╚',  icon:'╚',rot:0,cat:'road',color:'#4a5055',model:'road-bend',folder:'roads'},
+    {id:'rb-nw',label:'Corner NW ╔',  icon:'╔',rot:1,cat:'road',color:'#4a5055',model:'road-bend',folder:'roads'},
+    {id:'rb-ne',label:'Corner NE ╗',  icon:'╗',rot:2,cat:'road',color:'#4a5055',model:'road-bend',folder:'roads'},
+    {id:'rb-se',label:'Corner SE ╝',  icon:'╝',rot:3,cat:'road',color:'#4a5055',model:'road-bend',folder:'roads'},
     {section:'CROSSROADS'},
-    {id:'rc',    label:'Crossroad ╬',   icon:'╬',rot:0,cat:'road',color:'#4a5055',model:'road-crossroad',folder:'roads'},
-    {id:'rr',    label:'Roundabout ⊙',  icon:'⊙',rot:0,cat:'road',color:'#4a5055',model:'road-roundabout',folder:'roads'},
+    {id:'rc',   label:'Crossroad ╬',  icon:'╬',rot:0,cat:'road',color:'#4a5055',model:'road-crossroad',folder:'roads'},
+    {id:'rr',   label:'Roundabout ⊙', icon:'⊙',rot:0,cat:'road',color:'#4a5055',model:'road-roundabout',folder:'roads'},
     {section:'T-JUNCTIONS'},
-    {id:'rt-s',  label:'T open ↓S ╦',  icon:'╦',rot:0,cat:'road',color:'#4a5055',model:'road-intersection',folder:'roads'},
-    {id:'rt-n',  label:'T open ↑N ╩',  icon:'╩',rot:2,cat:'road',color:'#4a5055',model:'road-intersection',folder:'roads'},
-    {id:'rt-e',  label:'T open →E ╠',  icon:'╠',rot:3,cat:'road',color:'#4a5055',model:'road-intersection',folder:'roads'},
-    {id:'rt-w',  label:'T open ←W ╣',  icon:'╣',rot:1,cat:'road',color:'#4a5055',model:'road-intersection',folder:'roads'},
+    {id:'rt-s', label:'T open ↓S ╦', icon:'╦',rot:0,cat:'road',color:'#4a5055',model:'road-intersection',folder:'roads'},
+    {id:'rt-n', label:'T open ↑N ╩', icon:'╩',rot:2,cat:'road',color:'#4a5055',model:'road-intersection',folder:'roads'},
+    {id:'rt-e', label:'T open →E ╠', icon:'╠',rot:3,cat:'road',color:'#4a5055',model:'road-intersection',folder:'roads'},
+    {id:'rt-w', label:'T open ←W ╣', icon:'╣',rot:1,cat:'road',color:'#4a5055',model:'road-intersection',folder:'roads'},
     {section:'DEAD ENDS'},
-    {id:'re-e',  label:'End → East',   icon:'►',rot:0,cat:'road',color:'#4a5055',model:'road-end',folder:'roads'},
-    {id:'re-n',  label:'End ↑ North',  icon:'▲',rot:1,cat:'road',color:'#4a5055',model:'road-end',folder:'roads'},
-    {id:'re-w',  label:'End ← West',   icon:'◄',rot:2,cat:'road',color:'#4a5055',model:'road-end',folder:'roads'},
-    {id:'re-s',  label:'End ↓ South',  icon:'▼',rot:3,cat:'road',color:'#4a5055',model:'road-end',folder:'roads'},
+    {id:'re-e', label:'End → East',  icon:'►',rot:0,cat:'road',color:'#4a5055',model:'road-end',folder:'roads'},
+    {id:'re-n', label:'End ↑ North', icon:'▲',rot:1,cat:'road',color:'#4a5055',model:'road-end',folder:'roads'},
+    {id:'re-w', label:'End ← West',  icon:'◄',rot:2,cat:'road',color:'#4a5055',model:'road-end',folder:'roads'},
+    {id:'re-s', label:'End ↓ South', icon:'▼',rot:3,cat:'road',color:'#4a5055',model:'road-end',folder:'roads'},
     {section:'SPECIAL'},
-    {id:'rbs',   label:'Bend+Sidewalk', icon:'↳',rot:0,cat:'road',color:'#555c62',model:'road-bend-sidewalk',folder:'roads'},
-    {id:'rbsq',  label:'Bend Square',  icon:'⌐',rot:0,cat:'road',color:'#555c62',model:'road-bend-square',folder:'roads'},
-    {id:'rsd',   label:'Road Side',    icon:'|',rot:0,cat:'road',color:'#555c62',model:'road-side',folder:'roads'},
-    {id:'rsq',   label:'Road Square',  icon:'□',rot:0,cat:'road',color:'#555c62',model:'road-square',folder:'roads'},
-    {id:'rcr',   label:'Crossing',     icon:'⊠',rot:0,cat:'road',color:'#555c62',model:'road-crossing',folder:'roads'},
-    {id:'rd1',   label:'Driveway 1x',  icon:'↾',rot:0,cat:'road',color:'#555c62',model:'road-driveway-single',folder:'roads'},
-    {id:'rd2',   label:'Driveway 2x',  icon:'⇈',rot:0,cat:'road',color:'#555c62',model:'road-driveway-double',folder:'roads'},
+    {id:'rbs',  label:'Bend+Sidewalk',icon:'↳',rot:0,cat:'road',color:'#555c62',model:'road-bend-sidewalk',folder:'roads'},
+    {id:'rbsq', label:'Bend Square',  icon:'⌐',rot:0,cat:'road',color:'#555c62',model:'road-bend-square',folder:'roads'},
+    {id:'rsd',  label:'Road Side',   icon:'|',rot:0,cat:'road',color:'#555c62',model:'road-side',folder:'roads'},
+    {id:'rsq',  label:'Road Square', icon:'□',rot:0,cat:'road',color:'#555c62',model:'road-square',folder:'roads'},
+    {id:'rcr',  label:'Crossing',    icon:'⊠',rot:0,cat:'road',color:'#555c62',model:'road-crossing',folder:'roads'},
+    {id:'rd1',  label:'Driveway 1x', icon:'↾',rot:0,cat:'road',color:'#555c62',model:'road-driveway-single',folder:'roads'},
+    {id:'rd2',  label:'Driveway 2x', icon:'⇈',rot:0,cat:'road',color:'#555c62',model:'road-driveway-double',folder:'roads'},
   ],
   buildings:[
-    {section:'SKYSCRAPERS (Downtown)'},
+    {section:'SKYSCRAPERS'},
     ...['a','b','c','d','e'].map(l=>({id:`sky-${l}`,label:`Skyscraper ${l.toUpperCase()}`,icon:'🏙️',rot:0,cat:'downtown',color:'#1a3a5c',model:`building-skyscraper-${l}`,folder:'commercial'})),
-    {section:'COMMERCIAL (Downtown)'},
+    {section:'COMMERCIAL'},
     ...['a','b','c','d','e','f','g','h','i','j','k','l','m','n'].map(l=>({id:`com-${l}`,label:`Commercial ${l.toUpperCase()}`,icon:'🏢',rot:0,cat:'downtown',color:'#1e4068',model:`building-${l}`,folder:'commercial'})),
-    {section:'LOW DETAIL (Midtown)'},
+    {section:'MIDTOWN / LOW DETAIL'},
     ...['a','b','c','d','e','f','g','h','i','j','k','l','m','n'].map(l=>({id:`low-${l}`,label:`Low Detail ${l.toUpperCase()}`,icon:'🏬',rot:0,cat:'midtown',color:'#2a4a6a',model:`low-detail-building-${l}`,folder:'commercial'})),
     {id:'low-wa',label:'Low Wide A',icon:'🏬',rot:0,cat:'midtown',color:'#2a4a6a',model:'low-detail-building-wide-a',folder:'commercial'},
     {id:'low-wb',label:'Low Wide B',icon:'🏬',rot:0,cat:'midtown',color:'#2a4a6a',model:'low-detail-building-wide-b',folder:'commercial'},
@@ -181,13 +200,13 @@ const PALETTE = {
   ground:[
     {section:'NATURE'},
     {id:'g-forest', label:'Forest',      icon:'🌲',rot:0,cat:'forest',      color:'#1b5e20'},
-    {id:'g-field',  label:'Field/Grass', icon:'🌾',rot:0,cat:'field',       color:'#558b2f'},
+    {id:'g-field',  label:'Field / Grass',icon:'🌾',rot:0,cat:'field',       color:'#558b2f'},
     {id:'g-park',   label:'Park Lawn',   icon:'🟩',rot:0,cat:'park',        color:'#2e7d32'},
     {section:'WATER & COAST'},
     {id:'g-ocean',  label:'Ocean',       icon:'🌊',rot:0,cat:'ocean',       color:'#0d47a1'},
     {id:'g-beach',  label:'Beach Sand',  icon:'🏖️',rot:0,cat:'beachSand',  color:'#f57f17'},
     {id:'g-prom',   label:'Promenade',   icon:'🚶',rot:0,cat:'promenade',   color:'#8d6e3a'},
-    {section:'URBAN'},
+    {section:'URBAN GROUND'},
     {id:'g-plaza',  label:'Town Plaza',  icon:'⛲',rot:0,cat:'townPlaza',   color:'#90a4ae'},
     {id:'g-market', label:'Market Sq',   icon:'🛒',rot:0,cat:'marketSquare',color:'#8d6e1a'},
     {id:'g-build',  label:'Construction',icon:'🚧',rot:0,cat:'construction', color:'#bf360c'},
@@ -197,18 +216,18 @@ const PALETTE = {
     {id:'tree-s',label:'Tree Small',icon:'🌳',rot:0,cat:'prop',color:'#2e7d32',model:'tree-small',folder:'suburban'},
     {id:'tree-l',label:'Tree Large',icon:'🌲',rot:0,cat:'prop',color:'#1b5e20',model:'tree-large',folder:'suburban'},
     {section:'FENCES'},
-    {id:'f-1',  label:'Fence',    icon:'🚧',rot:0,cat:'prop',color:'#795548',model:'fence',    folder:'suburban'},
-    {id:'f-low',label:'Fence Low',icon:'🚧',rot:0,cat:'prop',color:'#795548',model:'fence-low',folder:'suburban'},
-    {id:'f-1x2',label:'Fence 1×2',icon:'🚧',rot:0,cat:'prop',color:'#795548',model:'fence-1x2',folder:'suburban'},
-    {id:'f-1x3',label:'Fence 1×3',icon:'🚧',rot:0,cat:'prop',color:'#795548',model:'fence-1x3',folder:'suburban'},
-    {id:'f-2x2',label:'Fence 2×2',icon:'🚧',rot:0,cat:'prop',color:'#795548',model:'fence-2x2',folder:'suburban'},
+    {id:'f-1',   label:'Fence',    icon:'🚧',rot:0,cat:'prop',color:'#795548',model:'fence',    folder:'suburban'},
+    {id:'f-low', label:'Fence Low',icon:'🚧',rot:0,cat:'prop',color:'#795548',model:'fence-low',folder:'suburban'},
+    {id:'f-1x2', label:'Fence 1×2',icon:'🚧',rot:0,cat:'prop',color:'#795548',model:'fence-1x2',folder:'suburban'},
+    {id:'f-1x3', label:'Fence 1×3',icon:'🚧',rot:0,cat:'prop',color:'#795548',model:'fence-1x3',folder:'suburban'},
+    {id:'f-2x2', label:'Fence 2×2',icon:'🚧',rot:0,cat:'prop',color:'#795548',model:'fence-2x2',folder:'suburban'},
     {section:'PATHS'},
-    {id:'p-s',  label:'Path Short',   icon:'·· ',rot:0,cat:'prop',color:'#a1887f',model:'path-short',        folder:'suburban'},
-    {id:'p-l',  label:'Path Long',    icon:'···',rot:0,cat:'prop',color:'#a1887f',model:'path-long',         folder:'suburban'},
-    {id:'p-ss', label:'Stones Short', icon:'○○', rot:0,cat:'prop',color:'#a1887f',model:'path-stones-short', folder:'suburban'},
-    {id:'p-sl', label:'Stones Long',  icon:'○○○',rot:0,cat:'prop',color:'#a1887f',model:'path-stones-long',  folder:'suburban'},
-    {id:'d-s',  label:'Driveway S',   icon:'▭',  rot:0,cat:'prop',color:'#757575',model:'driveway-short',    folder:'suburban'},
-    {id:'d-l',  label:'Driveway L',   icon:'▬',  rot:0,cat:'prop',color:'#757575',model:'driveway-long',     folder:'suburban'},
+    {id:'p-s',   label:'Path Short',  icon:'··', rot:0,cat:'prop',color:'#a1887f',model:'path-short',       folder:'suburban'},
+    {id:'p-l',   label:'Path Long',   icon:'···',rot:0,cat:'prop',color:'#a1887f',model:'path-long',        folder:'suburban'},
+    {id:'p-ss',  label:'Stones Short',icon:'○○', rot:0,cat:'prop',color:'#a1887f',model:'path-stones-short',folder:'suburban'},
+    {id:'p-sl',  label:'Stones Long', icon:'○··',rot:0,cat:'prop',color:'#a1887f',model:'path-stones-long', folder:'suburban'},
+    {id:'d-s',   label:'Driveway S',  icon:'▭',  rot:0,cat:'prop',color:'#757575',model:'driveway-short',   folder:'suburban'},
+    {id:'d-l',   label:'Driveway L',  icon:'▬',  rot:0,cat:'prop',color:'#757575',model:'driveway-long',    folder:'suburban'},
     {section:'DETAILS'},
     {id:'planter', label:'Planter',   icon:'🪴',rot:0,cat:'prop',color:'#388e3c',model:'planter',         folder:'suburban'},
     {id:'awning',  label:'Awning',    icon:'⛺',rot:0,cat:'prop',color:'#5c6bc0',model:'detail-awning',   folder:'commercial'},
@@ -220,162 +239,212 @@ const PALETTE = {
 };
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
-const GW=24,GH=24,TP=30;
+const GW=24, GH=24, TP=30;
 let grid={}, sel=null, rot=0, mode='draw', painting=false, hov=null;
 let undoStack=[], redoStack=[], tab='roads';
+let overlayOn=true, overlayAlpha=0.45;
 
-// ── CANVAS ────────────────────────────────────────────────────────────────────
-const cv=document.getElementById('grid-canvas');
-const cx=cv.getContext('2d');
-cv.width=GW*TP; cv.height=GH*TP;
+// ── CANVASES ──────────────────────────────────────────────────────────────────
+const gCv  = document.getElementById('grid-canvas');
+const gCtx = gCv.getContext('2d');
+const rCv  = document.getElementById('ref-canvas');
+const rCtx = rCv.getContext('2d');
+gCv.width = rCv.width  = GW * TP;
+gCv.height= rCv.height = GH * TP;
 
-const RARROWS=['↑','→','↓','←'];
+// ── LOAD REFERENCE IMAGE ──────────────────────────────────────────────────────
+const refImg = new Image();
+refImg.src = 'reference-map.png';
+refImg.onload = () => { drawRef(); };
 
-function draw(){
-  cx.clearRect(0,0,cv.width,cv.height);
-  for(let y=0;y<GH;y++){
-    for(let x=0;x<GW;x++){
-      const px=x*TP,py=y*TP;
-      const t=grid[`${x},${y}`];
-      const isH=hov&&hov.x===x&&hov.y===y;
-      // bg
-      cx.fillStyle=t?t.color:(isH?'#1e2a44':'#16162e');
-      cx.fillRect(px,py,TP,TP);
-      // icon
-      if(t){
-        cx.font=`${TP*.46}px serif`;
-        cx.textAlign='center';cx.textBaseline='middle';
-        cx.fillStyle='rgba(255,255,255,0.9)';
-        cx.fillText(t.icon,px+TP/2,py+TP/2+1);
-        if(t.rot){
-          cx.font=`${TP*.26}px sans-serif`;
-          cx.fillStyle='rgba(255,255,255,.65)';
-          cx.fillText(RARROWS[t.rot%4],px+TP-4,py+TP-5);
+function drawRef() {
+  rCtx.clearRect(0, 0, rCv.width, rCv.height);
+  if (!overlayOn) return;
+  rCtx.globalAlpha = overlayAlpha;
+  rCtx.drawImage(refImg, 0, 0, rCv.width, rCv.height);
+  rCtx.globalAlpha = 1;
+}
+
+// ── GRID DRAW ─────────────────────────────────────────────────────────────────
+const RARROWS = ['↑','→','↓','←'];
+
+function draw() {
+  gCtx.clearRect(0, 0, gCv.width, gCv.height);
+
+  for (let y = 0; y < GH; y++) {
+    for (let x = 0; x < GW; x++) {
+      const px = x*TP, py = y*TP;
+      const t  = grid[`${x},${y}`];
+      const isH= hov && hov.x===x && hov.y===y;
+
+      // Background — semi-transparent so ref shows through on empty tiles
+      if (t) {
+        gCtx.fillStyle = t.color + 'dd';
+        gCtx.fillRect(px, py, TP, TP);
+      } else {
+        // Empty tile: slightly tinted so placed tiles stand out vs reference
+        gCtx.fillStyle = 'rgba(10,10,26,0.55)';
+        gCtx.fillRect(px, py, TP, TP);
+      }
+
+      // Icon
+      if (t) {
+        gCtx.font = `${TP*.45}px serif`;
+        gCtx.textAlign = 'center'; gCtx.textBaseline = 'middle';
+        gCtx.fillStyle = 'rgba(255,255,255,0.92)';
+        gCtx.fillText(t.icon, px+TP/2, py+TP/2+1);
+        if (t.rot) {
+          gCtx.font = `${TP*.25}px sans-serif`;
+          gCtx.fillStyle = 'rgba(255,255,255,.6)';
+          gCtx.fillText(RARROWS[t.rot%4], px+TP-4, py+TP-5);
         }
       }
-      // hover preview
-      if(isH&&mode!=='erase'&&sel&&!t){
-        cx.fillStyle=sel.color+'44';
-        cx.fillRect(px,py,TP,TP);
-        cx.globalAlpha=.45;
-        cx.font=`${TP*.44}px serif`;
-        cx.textAlign='center';cx.textBaseline='middle';
-        cx.fillStyle='#fff';
-        cx.fillText(sel.icon,px+TP/2,py+TP/2+1);
-        cx.globalAlpha=1;
+
+      // Hover ghost
+      if (isH && mode!=='erase' && sel && !t) {
+        gCtx.fillStyle = sel.color + '55';
+        gCtx.fillRect(px, py, TP, TP);
+        gCtx.globalAlpha = 0.4;
+        gCtx.font = `${TP*.44}px serif`;
+        gCtx.textAlign = 'center'; gCtx.textBaseline = 'middle';
+        gCtx.fillStyle = '#fff';
+        gCtx.fillText(sel.icon, px+TP/2, py+TP/2+1);
+        gCtx.globalAlpha = 1;
       }
-      // hover border
-      if(isH){
-        cx.strokeStyle='#ffd600';cx.lineWidth=1.5;
-        cx.strokeRect(px+.75,py+.75,TP-1.5,TP-1.5);
+
+      // Hover border
+      if (isH) {
+        gCtx.strokeStyle = '#ffd600';
+        gCtx.lineWidth = 1.5;
+        gCtx.strokeRect(px+.75, py+.75, TP-1.5, TP-1.5);
       }
-      // grid lines
-      cx.strokeStyle='rgba(255,255,255,.06)';cx.lineWidth=.5;
-      cx.strokeRect(px,py,TP,TP);
+
+      // Grid lines
+      gCtx.strokeStyle = 'rgba(255,255,255,0.10)';
+      gCtx.lineWidth = 0.5;
+      gCtx.strokeRect(px, py, TP, TP);
     }
   }
-  // row/col markers every 4
-  cx.fillStyle='rgba(255,255,255,.2)';cx.font='7px monospace';
-  cx.textAlign='center';cx.textBaseline='top';
-  for(let x=0;x<GW;x+=4) cx.fillText(x,x*TP+TP/2,1);
-  cx.textAlign='left';cx.textBaseline='middle';
-  for(let y=0;y<GH;y+=4) cx.fillText(y,1,y*TP+TP/2);
+
+  // Every-4 major grid lines
+  gCtx.strokeStyle = 'rgba(255,255,255,0.18)';
+  gCtx.lineWidth = 1;
+  for (let x = 0; x <= GW; x+=4) {
+    gCtx.beginPath(); gCtx.moveTo(x*TP, 0); gCtx.lineTo(x*TP, GH*TP); gCtx.stroke();
+  }
+  for (let y = 0; y <= GH; y+=4) {
+    gCtx.beginPath(); gCtx.moveTo(0, y*TP); gCtx.lineTo(GW*TP, y*TP); gCtx.stroke();
+  }
+
+  // Coordinate labels every 4
+  gCtx.fillStyle = 'rgba(255,220,0,0.55)';
+  gCtx.font = 'bold 8px monospace';
+  gCtx.textAlign = 'center'; gCtx.textBaseline = 'top';
+  for (let x = 0; x < GW; x+=4) gCtx.fillText(x, x*TP+TP/2, 1);
+  gCtx.textAlign = 'left'; gCtx.textBaseline = 'middle';
+  for (let y = 0; y < GH; y+=4) gCtx.fillText(y, 1, y*TP+TP/2);
 }
 
-// ── TILE OPS ──────────────────────────────────────────────────────────────────
-function cell(e){
-  const r=cv.getBoundingClientRect();
-  const sx=cv.width/r.width,sy=cv.height/r.height;
-  const x=Math.floor((e.clientX-r.left)*sx/TP);
-  const y=Math.floor((e.clientY-r.top)*sy/TP);
-  return(x>=0&&y>=0&&x<GW&&y<GH)?{x,y}:null;
+// ── TILE OPERATIONS ───────────────────────────────────────────────────────────
+function cell(e) {
+  const r  = gCv.getBoundingClientRect();
+  const sx = gCv.width/r.width, sy = gCv.height/r.height;
+  const x  = Math.floor((e.clientX-r.left)*sx/TP);
+  const y  = Math.floor((e.clientY-r.top)*sy/TP);
+  return (x>=0&&y>=0&&x<GW&&y<GH) ? {x,y} : null;
 }
 
-function place(x,y){
-  if(!sel)return;
+function place(x,y) {
+  if (!sel) return;
   const k=`${x},${y}`;
-  undoStack.push({k,p:grid[k]?{...grid[k]}:null});
+  undoStack.push({k, p: grid[k]?{...grid[k]}:null});
   redoStack=[];
-  grid[k]={...sel,rot};
-  refreshUI();draw();updateInfo(x,y);
+  grid[k]={...sel, rot};
+  refreshUI(); draw(); updateInfo(x,y);
 }
 
-function erase(x,y){
+function erase(x,y) {
   const k=`${x},${y}`;
-  if(!grid[k])return;
-  undoStack.push({k,p:{...grid[k]}});
+  if (!grid[k]) return;
+  undoStack.push({k, p:{...grid[k]}});
   redoStack=[];
   delete grid[k];
-  refreshUI();draw();updateInfo(x,y);
+  refreshUI(); draw(); updateInfo(x,y);
 }
 
-function fill(x,y){
-  if(!sel)return;
-  const tgt=grid[`${x},${y}`]?.cat||null;
-  const vis=new Set(),q=[[x,y]],batch=[];
+function fill(x,y) {
+  if (!sel) return;
+  const tgt = grid[`${x},${y}`]?.cat||null;
+  const vis=new Set(), q=[[x,y]], batch=[];
   while(q.length){
-    const[cx2,cy2]=q.shift();
-    if(cx2<0||cy2<0||cx2>=GW||cy2>=GH)continue;
-    const k=`${cx2},${cy2}`;
-    if(vis.has(k))continue;vis.add(k);
+    const[cx,cy]=q.shift();
+    if(cx<0||cy<0||cx>=GW||cy>=GH) continue;
+    const k=`${cx},${cy}`;
+    if(vis.has(k)) continue; vis.add(k);
     const cur=grid[k]?.cat||null;
-    if(cur!==tgt)continue;
+    if(cur!==tgt) continue;
     batch.push(k);
-    q.push([cx2-1,cy2],[cx2+1,cy2],[cx2,cy2-1],[cx2,cy2+1]);
+    q.push([cx-1,cy],[cx+1,cy],[cx,cy-1],[cx,cy+1]);
   }
-  if(!batch.length)return;
-  undoStack.push({batch:batch.map(k=>({k,p:grid[k]?{...grid[k]}:null}))});
+  if(!batch.length) return;
+  undoStack.push({batch: batch.map(k=>({k, p:grid[k]?{...grid[k]}:null}))});
   redoStack=[];
-  batch.forEach(k=>{grid[k]={...sel,rot};});
-  refreshUI();draw();
+  batch.forEach(k=>{ grid[k]={...sel,rot}; });
+  refreshUI(); draw();
 }
 
-function undo(){
-  if(!undoStack.length)return;
+function undo() {
+  if(!undoStack.length) return;
   const a=undoStack.pop();
   if(a.batch){
-    redoStack.push({batch:a.batch.map(b=>({k:b.k,p:grid[b.k]?{...grid[b.k]}:null}))});
-    a.batch.forEach(b=>{if(b.p)grid[b.k]=b.p;else delete grid[b.k];});
-  }else{
-    redoStack.push({k:a.k,p:grid[a.k]?{...grid[a.k]}:null});
-    if(a.p)grid[a.k]=a.p;else delete grid[a.k];
+    redoStack.push({batch: a.batch.map(b=>({k:b.k, p:grid[b.k]?{...grid[b.k]}:null}))});
+    a.batch.forEach(b=>{ if(b.p) grid[b.k]=b.p; else delete grid[b.k]; });
+  } else {
+    redoStack.push({k:a.k, p:grid[a.k]?{...grid[a.k]}:null});
+    if(a.p) grid[a.k]=a.p; else delete grid[a.k];
   }
-  refreshUI();draw();
+  refreshUI(); draw();
 }
 
-function redo(){
-  if(!redoStack.length)return;
+function redo() {
+  if(!redoStack.length) return;
   const a=redoStack.pop();
   if(a.batch){
-    undoStack.push({batch:a.batch.map(b=>({k:b.k,p:grid[b.k]?{...grid[b.k]}:null}))});
-    a.batch.forEach(b=>{if(b.p)grid[b.k]=b.p;else delete grid[b.k];});
-  }else{
-    undoStack.push({k:a.k,p:grid[a.k]?{...grid[a.k]}:null});
-    if(a.p)grid[a.k]=a.p;else delete grid[a.k];
+    undoStack.push({batch: a.batch.map(b=>({k:b.k, p:grid[b.k]?{...grid[b.k]}:null}))});
+    a.batch.forEach(b=>{ if(b.p) grid[b.k]=b.p; else delete grid[b.k]; });
+  } else {
+    undoStack.push({k:a.k, p:grid[a.k]?{...grid[a.k]}:null});
+    if(a.p) grid[a.k]=a.p; else delete grid[a.k];
   }
-  refreshUI();draw();
+  refreshUI(); draw();
 }
 
-// ── CANVAS EVENTS ──────────────────────────────────────────────────────────────
-cv.addEventListener('mousedown',e=>{
+// ── CANVAS EVENTS ─────────────────────────────────────────────────────────────
+gCv.addEventListener('mousedown', e=>{
   e.preventDefault();
-  const c=cell(e);if(!c)return;
+  const c=cell(e); if(!c) return;
   painting=true;
-  if(e.button===2){erase(c.x,c.y);return;}
-  if(mode==='draw')place(c.x,c.y);
-  else if(mode==='erase')erase(c.x,c.y);
-  else if(mode==='fill')fill(c.x,c.y);
+  if(e.button===2){ erase(c.x,c.y); return; }
+  if(mode==='draw')  place(c.x,c.y);
+  else if(mode==='erase') erase(c.x,c.y);
+  else if(mode==='fill')  fill(c.x,c.y);
 });
-cv.addEventListener('mousemove',e=>{
-  const c=cell(e);hov=c;
-  if(c){updateInfo(c.x,c.y);if(painting){if(mode==='draw')place(c.x,c.y);else if(mode==='erase')erase(c.x,c.y);}}
+gCv.addEventListener('mousemove', e=>{
+  const c=cell(e); hov=c;
+  if(c){
+    updateInfo(c.x,c.y);
+    if(painting){
+      if(mode==='draw')  place(c.x,c.y);
+      else if(mode==='erase') erase(c.x,c.y);
+    }
+  }
   draw();
 });
-cv.addEventListener('mouseup',()=>{painting=false;});
-cv.addEventListener('mouseleave',()=>{painting=false;hov=null;draw();});
-cv.addEventListener('contextmenu',e=>e.preventDefault());
+gCv.addEventListener('mouseup',    ()=>{ painting=false; });
+gCv.addEventListener('mouseleave', ()=>{ painting=false; hov=null; draw(); });
+gCv.addEventListener('contextmenu', e=>e.preventDefault());
 
-// ── INFO PANEL ─────────────────────────────────────────────────────────────────
+// ── INFO PANEL ────────────────────────────────────────────────────────────────
 function updateInfo(x,y){
   document.getElementById('info-pos').textContent=`(${x}, ${y})`;
   const t=grid[`${x},${y}`];
@@ -386,7 +455,7 @@ function updateInfo(x,y){
     document.getElementById('info-model').textContent=t.model||'—';
     document.getElementById('info-rot').textContent=['0°','90°','180°','270°'][t.rot%4];
     document.getElementById('info-cat').textContent=t.cat;
-  }else{
+  } else {
     document.getElementById('tile-preview').textContent='·';
     document.getElementById('tile-preview').style.background='';
     document.getElementById('info-placed').textContent='Empty';
@@ -405,24 +474,25 @@ function updateRotDisplay(){
   document.getElementById('rot-display').textContent=`ROT ${d[rot]}`;
 }
 
-// ── PALETTE ────────────────────────────────────────────────────────────────────
-function renderPal(t,f=''){
+// ── PALETTE ───────────────────────────────────────────────────────────────────
+function renderPal(t, f=''){
   const list=document.getElementById('pal-list');
   list.innerHTML='';
   const fl=f.toLowerCase();
   (PALETTE[t]||[]).forEach(item=>{
     if(item.section){
-      if(fl)return;
+      if(fl) return;
       const s=document.createElement('div');
-      s.className='pal-section';s.textContent=item.section;
-      list.appendChild(s);return;
+      s.className='pal-section'; s.textContent=item.section;
+      list.appendChild(s); return;
     }
-    if(fl&&!item.label.toLowerCase().includes(fl)&&!(item.model||'').includes(fl))return;
+    if(fl&&!item.label.toLowerCase().includes(fl)&&!(item.model||'').includes(fl)) return;
     const el=document.createElement('div');
     el.className='pal-item'+(sel&&sel.id===item.id?' selected':'');
-    el.innerHTML=`<div class="pal-icon" style="background:${item.color}22;border:1px solid ${item.color}44">${item.icon}</div><div class="pal-label"><strong>${item.label}</strong>${item.model||item.cat}</div>`;
+    el.innerHTML=`<div class="pal-icon" style="background:${item.color}22;border:1px solid ${item.color}55">${item.icon}</div><div class="pal-label"><strong>${item.label}</strong>${item.model||item.cat}</div>`;
     el.addEventListener('click',()=>{
-      sel=item;rot=item.rot||0;updateRotDisplay();renderPal(tab,document.getElementById('search-input').value);
+      sel=item; rot=item.rot||0; updateRotDisplay();
+      renderPal(tab, document.getElementById('search-input').value);
     });
     list.appendChild(el);
   });
@@ -437,86 +507,119 @@ document.querySelectorAll('.pal-tab').forEach(t=>{
     renderPal(tab);
   });
 });
-document.getElementById('search-input').addEventListener('input',e=>renderPal(tab,e.target.value));
+document.getElementById('search-input').addEventListener('input', e=>renderPal(tab, e.target.value));
 
-// ── TOOLBAR ────────────────────────────────────────────────────────────────────
+// ── TOOLBAR ───────────────────────────────────────────────────────────────────
 function setMode(m){
   mode=m;
-  ['draw','erase','fill'].forEach(x=>document.getElementById(`btn-${x}`).classList.toggle('active',x===m));
+  ['draw','erase','fill'].forEach(x=>
+    document.getElementById(`btn-${x}`).classList.toggle('active', x===m)
+  );
 }
-document.getElementById('btn-draw').addEventListener('click',()=>setMode('draw'));
-document.getElementById('btn-erase').addEventListener('click',()=>setMode('erase'));
-document.getElementById('btn-fill').addEventListener('click',()=>setMode('fill'));
-document.getElementById('btn-rot').addEventListener('click',()=>{rot=(rot+1)%4;updateRotDisplay();});
-document.getElementById('btn-undo').addEventListener('click',undo);
-document.getElementById('btn-redo').addEventListener('click',redo);
-document.getElementById('btn-clear').addEventListener('click',()=>{
-  if(!confirm('Clear the entire map?'))return;
-  undoStack.push({batch:Object.entries(grid).map(([k,v])=>({k,p:{...v}}))});
-  redoStack=[];grid={};refreshUI();draw();
+document.getElementById('btn-draw').addEventListener('click',  ()=>setMode('draw'));
+document.getElementById('btn-erase').addEventListener('click', ()=>setMode('erase'));
+document.getElementById('btn-fill').addEventListener('click',  ()=>setMode('fill'));
+document.getElementById('btn-rot').addEventListener('click',   ()=>{ rot=(rot+1)%4; updateRotDisplay(); });
+document.getElementById('btn-undo').addEventListener('click',  undo);
+document.getElementById('btn-redo').addEventListener('click',  redo);
+document.getElementById('btn-clear').addEventListener('click', ()=>{
+  if(!confirm('Clear the entire map?')) return;
+  undoStack.push({batch: Object.entries(grid).map(([k,v])=>({k, p:{...v}}))});
+  redoStack=[]; grid={};
+  refreshUI(); draw();
 });
 
-// ── KEYBOARD ───────────────────────────────────────────────────────────────────
-window.addEventListener('keydown',e=>{
-  if(e.target.tagName==='INPUT')return;
-  if(e.key==='r'||e.key==='R'){rot=(rot+1)%4;updateRotDisplay();}
-  if(e.key==='d'||e.key==='D')setMode('draw');
-  if(e.key==='e'||e.key==='E')setMode('erase');
-  if(e.key==='f'||e.key==='F')setMode('fill');
-  if(e.ctrlKey&&e.key==='z'){e.preventDefault();undo();}
-  if(e.ctrlKey&&e.key==='y'){e.preventDefault();redo();}
-  if(e.ctrlKey&&e.key==='s'){e.preventDefault();saveJSON();}
+// ── OVERLAY CONTROLS ──────────────────────────────────────────────────────────
+document.getElementById('btn-overlay').addEventListener('click', ()=>{
+  overlayOn=!overlayOn;
+  const btn=document.getElementById('btn-overlay');
+  btn.textContent=overlayOn?'🗺️ Reference ON':'🗺️ Reference OFF';
+  btn.classList.toggle('active', overlayOn);
+  drawRef();
+});
+document.getElementById('overlay-slider').addEventListener('input', e=>{
+  overlayAlpha=parseInt(e.target.value)/100;
+  drawRef();
+});
+// init overlay button state
+document.getElementById('btn-overlay').classList.add('active');
+
+// ── KEYBOARD ──────────────────────────────────────────────────────────────────
+window.addEventListener('keydown', e=>{
+  if(e.target.tagName==='INPUT') return;
+  if(e.key==='r'||e.key==='R'){ rot=(rot+1)%4; updateRotDisplay(); }
+  if(e.key==='d'||e.key==='D') setMode('draw');
+  if(e.key==='e'||e.key==='E') setMode('erase');
+  if(e.key==='f'||e.key==='F') setMode('fill');
+  if(e.key==='o'||e.key==='O'){
+    overlayOn=!overlayOn;
+    document.getElementById('btn-overlay').textContent=overlayOn?'🗺️ Reference ON':'🗺️ Reference OFF';
+    document.getElementById('btn-overlay').classList.toggle('active',overlayOn);
+    drawRef();
+  }
+  if(e.ctrlKey&&e.key==='z'){ e.preventDefault(); undo(); }
+  if(e.ctrlKey&&e.key==='y'){ e.preventDefault(); redo(); }
+  if(e.ctrlKey&&e.key==='s'){ e.preventDefault(); saveJSON(); }
 });
 
-// ── SAVE / LOAD ────────────────────────────────────────────────────────────────
+// ── SAVE / LOAD ───────────────────────────────────────────────────────────────
 function buildJSON(){
   const tiles=[];
   Object.entries(grid).forEach(([k,t])=>{
     const[x,y]=k.split(',').map(Number);
     tiles.push({x,y,cat:t.cat,model:t.model||null,folder:t.folder||null,rot:t.rot,label:t.label,icon:t.icon,color:t.color});
   });
-  return {version:1,gridW:GW,gridH:GH,tiles};
+  return {version:1, gridW:GW, gridH:GH, tiles};
 }
 
 function saveJSON(){
-  const data=JSON.stringify(buildJSON(),null,2);
-  const blob=new Blob([data],{type:'application/json'});
+  const blob=new Blob([JSON.stringify(buildJSON(),null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  a.href=url;a.download='city-map.json';a.click();
+  a.href=url; a.download='city-map.json'; a.click();
   URL.revokeObjectURL(url);
-  toast('✅ city-map.json saved! Drop it in your public/ folder.');
+  toast('✅ city-map.json saved! Drop it into your public/ folder.');
 }
 
-document.getElementById('btn-save').addEventListener('click',saveJSON);
-document.getElementById('btn-load').addEventListener('click',()=>document.getElementById('file-input').click());
-document.getElementById('file-input').addEventListener('change',e=>{
-  const f=e.target.files[0];if(!f)return;
-  const r=new FileReader();
-  r.onload=ev=>{
+document.getElementById('btn-save').addEventListener('click', saveJSON);
+document.getElementById('btn-load').addEventListener('click', ()=>document.getElementById('file-input').click());
+document.getElementById('file-input').addEventListener('change', e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
     try{
       const d=JSON.parse(ev.target.result);
       grid={};
       (d.tiles||[]).forEach(t=>{
-        grid[`${t.x},${t.y}`]={id:t.id||`${t.cat}-${t.model}`,model:t.model,folder:t.folder,cat:t.cat,color:t.color||'#555',icon:t.icon||'?',rot:t.rot||0,label:t.label||t.model};
+        grid[`${t.x},${t.y}`]={
+          id:t.id||`${t.cat}-${t.model}`, model:t.model, folder:t.folder,
+          cat:t.cat, color:t.color||'#555', icon:t.icon||'?',
+          rot:t.rot||0, label:t.label||t.model
+        };
       });
-      undoStack=[];redoStack=[];refreshUI();draw();
+      undoStack=[]; redoStack=[];
+      refreshUI(); draw();
       toast(`✅ Loaded! ${Object.keys(grid).length} tiles.`);
-    }catch{toast('❌ Failed to parse JSON.');}
+    } catch { toast('❌ Failed to parse JSON.'); }
   };
-  r.readAsText(f);e.target.value='';
+  reader.readAsText(f);
+  e.target.value='';
 });
 
-// ── TOAST ──────────────────────────────────────────────────────────────────────
+// ── TOAST ─────────────────────────────────────────────────────────────────────
 let toastT;
 function toast(msg){
   const el=document.getElementById('toast');
-  el.textContent=msg;el.classList.add('show');
-  clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),3200);
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastT);
+  toastT=setTimeout(()=>el.classList.remove('show'), 3200);
 }
 
-// ── INIT ───────────────────────────────────────────────────────────────────────
-renderPal('roads');updateRotDisplay();draw();refreshUI();
+// ── INIT ──────────────────────────────────────────────────────────────────────
+renderPal('roads');
+updateRotDisplay();
+draw();
+refreshUI();
 </script>
 </body>
 </html>
